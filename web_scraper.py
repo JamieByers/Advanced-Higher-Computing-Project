@@ -26,6 +26,10 @@ class WebScraper:
 
             price = product.find_all(class_="s-item__price")[0].text.strip()
 
+            link = product.find_all(class_="s-item__link")
+            if link:
+                p.link = link[0].get("href")
+
             p.price = price
             price_split = price.split(" ")
 
