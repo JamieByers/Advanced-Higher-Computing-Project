@@ -14,5 +14,4 @@ class Product:
         print("price: ", self.price)
         print("cheapest price: ", self.cheapest_price)
         print("dearest price: ", self.dearest_price)
-        print("delivery: ", self.delivery)
         print("link: ", self.link)
