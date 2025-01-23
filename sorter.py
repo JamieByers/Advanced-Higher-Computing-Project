@@ -2,6 +2,7 @@ class Sorter:
     def __init__(self, ):
         self.products = []
 
+    # A basic bubble sort to sort the products 
     def sort(self, key):
         n = len(self.products)
         swapped = True
