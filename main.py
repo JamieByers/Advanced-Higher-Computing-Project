@@ -5,7 +5,5 @@ from web_scraper import WebScraper
 scraper = WebScraper(search="boots")
 
 # Scrape the products
-scraper.scrape()
+products = scraper.scrape(limit=3)
 
-# Display the products
-# scraper.display()

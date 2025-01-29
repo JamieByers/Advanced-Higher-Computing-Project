@@ -1,10 +1,11 @@
 from selenium import webdriver
-from selenium.webdriver.common import desired_capabilities
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import time
+import json
+import os
 
 from product import Product
 
@@ -12,7 +13,13 @@ from product import Product
 class WebScraper:
     def __init__(self, search: str) -> None:
         self.search: str = search
-        self.url = f"https://www.vinted.co.uk/catalog?search_text={search}"
+        self.url = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
+        self.products = []
+
+    def input_validate(self):
+        search = self.search.strip()
+        search.replace(" ", "%20")
+        return search
 
     def initialise_driver(self, headless=True):
         chrome_options = Options()
@@ -21,6 +28,7 @@ class WebScraper:
         else:
             chrome_options.add_argument("--disable-headless")  # Run in headless mode
 
+        chrome_options.add_argument("--disable-gpu")  # Better performance
         return webdriver.Chrome(options=chrome_options)
 
 
@@ -52,21 +60,19 @@ class WebScraper:
 
                 print("card url", url)
 
+            driver.quit()
+
             return urls
-
-
 
         except Exception as e:
             print(f"An error occurred: {e}")
 
-        finally:
-            driver.quit()
 
-    def scrape_first_product(self, url: str, driver: webdriver.Chrome):
-        print("Product scraping at url: ", url)
+    def accept_cookies(self, url: str, driver: webdriver.Chrome):
+        print("Accepting cookies")
         try:
             driver.get(url)
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(driver, 5)
 
             accept_button = wait.until(
                 EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
@@ -74,15 +80,11 @@ class WebScraper:
             accept_button.click()
 
             time.sleep(2)
-            product_info = driver.find_element(By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")
-            print("product info", product_info)
-
 
         except Exception as e:
             print("Scraped product function failed", e)
 
     def scrape_product(self, url: str, driver: webdriver.Chrome):
-        print("Product scraping at url: ", url)
         try:
             driver.get(url)
             wait = WebDriverWait(driver, 10)
@@ -99,6 +101,7 @@ class WebScraper:
             product.title = title
 
             size_quality = summary[1].split("·")
+
             size = size_quality[0]
             product.size = size
 
@@ -117,9 +120,9 @@ class WebScraper:
             details = details_list.find_elements(By.CSS_SELECTOR, "div[class='details-list__item-value']")
             details = [detail.text for detail in details]
 
-            # NOT WORKING
-            # postage = details_list.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner-price']").text
-            # print(postage)
+            postage = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
+            postage = float(postage.split("£")[-1])
+            product.postage = postage
 
             product_details = {}
             n = len(details)
@@ -136,29 +139,69 @@ class WebScraper:
             product.payment_options = product_details.get("Payment options", "")
             product.colour = product_details.get("Colour", "")
             product.views = product_details.get("Views", 0.0)
+            product.url = url
 
+            return product
 
-
-            print(product_details)
-            # print("title: ", title)
-            # print("size: ", size)
-            # print("quality: ", quality)
-            # print("pricing: ", pricing)
-            # print("details list", details_list)
-            print()
 
         except Exception as e:
             print("Scraped product function failed", e)
+            return None
 
-    def scrape(self):
+    def scrape(self, limit=5, caching=True):
         urls = self.fetch_urls()
-        driver = self.initialise_driver()
+        driver = self.initialise_driver(headless=False)
+        counter = 0
 
         if urls and driver:
-            first_url = urls.pop(0)
-            self.scrape_first_product(url=first_url, driver=driver)
-            for url in urls:
-                self.scrape_product(url=url, driver=driver)
+            self.accept_cookies(url=urls[0], driver=driver)
+            for i, url in enumerate(urls):
+                if counter >= limit and limit != 0:
+                    break
+
+                print(f"Product {i}/{len(urls) if not limit else limit}")
+                product = self.scrape_product(url=url, driver=driver)
+                if product:
+                    product.display()
+                    self.products.append(product)
+                    if caching:
+                        self.cache(product)
+                        print()
+
+                counter += 1
 
         driver.close()
+        return self.products
+
+
+    def cache(self, product):
+        file_name = f"{self.search}-data.json"
+
+        if not os.path.exists(file_name):
+            with open(file_name, "w") as file:
+                json.dump([], file, indent=4)
+
+        with open(file_name, "r+") as file:
+            try:
+                products = json.load(file)
+            except json.JSONDecodeError:
+                products = []
+
+            products.append(product.__dict__)
+
+            file.seek(0)
+            json.dump(products, file, indent=4)
+
+        print("Cached product: ", product.title)
+
+
+    def full_cache(self):
+        import json
+
+        total_json = [product_object.__dict__ for product_object in self.products]
+
+        with open(f"{self.search}-data.json", "w+") as file:
+            json.dump(total_json, file, indent=4)
+
+        print("Successfully cached data to:", f"{self.search}-data.json")
 

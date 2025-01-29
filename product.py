@@ -16,7 +16,6 @@ class Product:
         description: str = "",
         url: str = "",
         uploaded: str = "",
-        other_data: list[str] = []
     ):
         self.title = title
         self.price = price
@@ -33,5 +32,23 @@ class Product:
         self.url = url
         self.colour = colour
         self.uploaded = uploaded
-        self.other_data = other_data if other_data is not None else []
 
+    def display(self):
+        print("Product Details:")
+        print(f"Title: {self.title}")
+        print(f"Price: £{self.price:.2f}")
+        print(f"Buyer Protection Price: £{self.buyer_protection_price:.2f}")
+        print(f"Postage: £{self.postage:.2f}")
+        print(f"Brand: {self.brand}")
+        print(f"Colour: {self.colour}")
+        print(f"Size: {self.size}")
+        print(f"Quality: {self.quality}")
+        print(f"Condition: {self.condition}")
+        print(f"Location: {self.location}")
+        print(f"Payment Options: {self.payment_options}")
+        print(f"Views: {self.views}")
+        print(f"Description: {self.description}")
+        print(f"Uploaded: {self.uploaded}")
+        print(f"URL: {self.url}")
+        print()
+        print()
