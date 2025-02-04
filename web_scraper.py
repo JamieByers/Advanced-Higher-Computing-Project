@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+import tempfile
 import time
 import json
 import os
@@ -21,14 +22,15 @@ class WebScraper:
         search.replace(" ", "%20")
         return search
 
-    def initialise_driver(self, headless=True):
+    def initialise_driver(self):
         chrome_options = Options()
-        if headless:
-            chrome_options.add_argument("--headless")  # Run in headless mode
-        else:
-            chrome_options.add_argument("--disable-headless")  # Run in headless mode
-
+        chrome_options.add_argument("--headless")  # Run in headless mode
         chrome_options.add_argument("--disable-gpu")  # Better performance
+
+        # Use a temporary directory for the user data
+        user_data_dir = tempfile.mkdtemp()
+        chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+        
         return webdriver.Chrome(options=chrome_options)
 
 
@@ -150,7 +152,7 @@ class WebScraper:
 
     def scrape(self, limit=5, caching=True):
         urls = self.fetch_urls()
-        driver = self.initialise_driver(headless=False)
+        driver = self.initialise_driver()
         counter = 0
 
         if urls and driver:
