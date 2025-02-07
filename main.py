@@ -1,20 +1,20 @@
+import time 
+
 # Import my web scraper
 from web_scraper import WebScraper
 
-# input = str(input("What product would you like to search for: "))
+start = time.time()
 
 # Create instance of my web scraper
-scraper = WebScraper(search="boots")
-
-# search_or_sort = str(input("Would you like to search or sort the products found: "))
-# search_or_sort = search_or_sort.strip()
-# search_or_sort = search_or_sort.lower()
-# while search_or_sort not in ["search", "sort"]: 
-#     search_or_sort = str(input("Would you like to search or sort the products found: "))
-
-
+limit = 2
+scraper = WebScraper(search="boots", limit=5)
 
 
 # Scrape the products
-products = scraper.scrape(limit=3)
+products = scraper.scrape()
 
+end = time.time()
+
+time = end - start
+
+print(f"Webscraper took {time} for {len(products)} items")

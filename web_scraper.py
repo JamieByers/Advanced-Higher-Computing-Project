@@ -12,10 +12,11 @@ from product import Product
 
 
 class WebScraper:
-    def __init__(self, search: str) -> None:
+    def __init__(self, search: str, limit=-1) -> None:
         self.search: str = search
         self.url = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
         self.products = []
+        self.limit = limit
 
     def input_validate(self) -> str:
         # remove trailing spaces 
@@ -41,72 +42,101 @@ class WebScraper:
 
 
     def fetch_urls(self):
-        try:
-            # Initialize the driver
-            driver = self.initialise_driver()
-            driver.get(self.url)
+        print("Fetching urls")
 
-            # Wait for the product grid to load
-            wait = WebDriverWait(driver, 5)
-            product_cards = wait.until(
-                EC.presence_of_all_elements_located(
-                    (By.CSS_SELECTOR, "div[class='feed-grid__item']")
-                )
+        # Initialize the driver
+        driver = self.initialise_driver()
+        driver.get(self.url)
+
+        # Wait for the product grid to load and get each grid item
+        wait = WebDriverWait(driver, 10)
+        time.sleep(1)
+        product_cards = wait.until(
+            EC.presence_of_all_elements_located(
+                (By.CSS_SELECTOR, "div[class='feed-grid__item']")
             )
+        )
 
-            # if no product cards are found return and empty array
-            if not product_cards:
-                print("No products found.")
-                return []
+        print("Product cards found? ", len(product_cards))
 
-            urls = []
+        # if no product cards are found return and empty array
+        if not product_cards:
+            print("ERROR: No products found.")
+            return 
 
-            # loop through each product on the page 
+        urls = []
+        count = 0
+
+        for pc in product_cards:
+            print("Product card: ", pc)
+            print("URL? ", pc.get_attribute("href"))
+            print()
+
+        # loop through each product on the page 
+        if product_cards:
+            print("product cards")
             for card in product_cards:
-                card_urls = card.find_elements(By.TAG_NAME, "a")
+                # end loop if limit reached
+                if count >= self.limit and self.limit > 0:
+                    break 
 
-                # save the product url to go back to later 
-                url = card_urls[1].get_attribute('href')
-                urls.append(url)
+                print("Processing card")
+                card_url = card.find_elements(By.TAG_NAME, "a")
+                print("Raw card url: ", card_url)
 
-                print("card url", url)
+                if len(card_url) > 1:
+                    # save the product url to go back to later 
+                    url = card_url[1].get_attribute('href')
+                    urls.append(url)
 
-            driver.quit()
+                    print("card url", url)
 
-            return urls
+                count += 1
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        driver.quit()
+
+        print("Ended fetch urls")
+        return urls
+
 
 
     def accept_cookies(self, url: str, driver: webdriver.Chrome):
         print("Accepting cookies")
         try:
             driver.get(url)
-            wait = WebDriverWait(driver, 5)
+            wait = WebDriverWait(driver, 10)
 
             # wait until cookies appear
             accept_button = wait.until(
                 EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
             )
+
+            # give time for the button to load
+            time.sleep(2)
+
             # click "Accept Cookies" button
             accept_button.click()
 
-            # give time to allow the rest of the page to load
-            time.sleep(2)
+            time.sleep(1)
+
+            print("Accepted cookies")
+
+            return True
 
         except Exception as e:
-            print("Scraped product function failed", e)
+            print("Accept Cookies Failed (line 105): ", e)
+            return False
 
     def scrape_product(self, url: str, driver: webdriver.Chrome):
         try:
             # go to product by url 
             driver.get(url)
             # wait for page content to load
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(driver, 20)
 
             # wait until the product data has loaded
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")))
+            time.sleep(1)
 
             # find the main information div
             product_info = driver.find_element(By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")
@@ -166,10 +196,11 @@ class WebScraper:
 
 
         except Exception as e:
-            print("Scraped product function failed", e)
+            print("Scrape product function failed (line 175)", e)
             return None
 
-    def scrape(self, limit=5, caching=True):
+    def scrape(self, caching=True):
+        print("Scraping")
         # get all product urls 
         urls = self.fetch_urls()
 
@@ -181,17 +212,20 @@ class WebScraper:
 
         # if urls were found and the driver was created correctly 
         if urls and driver:
+            print("urls and drivers ok")
             # accept cookies on the first url but dont scrape, this is just to have cookies accepted
             # on all future product pages so the unexpected html doesnt get in the way
-            self.accept_cookies(url=urls[0], driver=driver)
+            cookies_accepted = self.accept_cookies(url=urls[0], driver=driver)
+            if cookies_accepted:
+                print("cookies function ran properly")
 
             # loop through for index of url and actual url 
             for i, url in enumerate(urls):
                 # if the limit has been reached end scraping
-                if counter >= limit and limit != 0:
+                if counter >= self.limit and self.limit > 0:
                     break
 
-                print(f"Product {i}/{len(urls) if not limit else limit}")
+                print(f"Product {i}/{len(urls) if not self.limit else self.limit}")
                 # scrape product information 
                 product = self.scrape_product(url=url, driver=driver)
 
@@ -206,7 +240,7 @@ class WebScraper:
 
                 counter += 1
 
-        driver.close()
+        driver.quit()
         return self.products
 
 
@@ -229,7 +263,9 @@ class WebScraper:
                 products = []
 
             # add the product in a hashmap format 
-            products.append(product.__dict__)
+            pd = product.__dict__
+            if pd not in products:
+                products.append(pd)
 
             file.seek(0)
             # write the product data in a json format 
