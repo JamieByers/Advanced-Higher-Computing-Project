@@ -6,8 +6,8 @@ from web_scraper import WebScraper
 start = time.time()
 
 # Create instance of my web scraper
-limit = 2
-scraper = WebScraper(search="boots", limit=5)
+limit = 5
+scraper = WebScraper(search="boots", limit=limit)
 
 
 # Scrape the products
@@ -18,3 +18,12 @@ end = time.time()
 time = end - start
 
 print(f"Webscraper took {time} for {len(products)} items")
+
+for _ in range(5):
+    print()
+
+print([(p.title, p.price) for p in scraper.products])
+
+scraper.sort()
+
+print([(p.title, p.price) for p in scraper.products])

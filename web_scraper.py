@@ -34,6 +34,11 @@ class WebScraper:
         chrome_options.add_argument("--headless")  # Run in headless mode
         chrome_options.add_argument("--disable-gpu")  # Better performance
 
+        chrome_options.add_argument('--enable-logging')
+        chrome_options.add_argument('--v=1')
+        chrome_options.add_argument('--no-sandbox')       
+        chrome_options.add_argument('--disable-dev-shm-usage')
+
         # Use a temporary directory for the user data
         user_data_dir = tempfile.mkdtemp() 
         chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
@@ -59,41 +64,19 @@ class WebScraper:
 
         print("Product cards found? ", len(product_cards))
 
-        # if no product cards are found return and empty array
-        if not product_cards:
-            print("ERROR: No products found.")
-            return 
-
         urls = []
-        count = 0
-
-        for pc in product_cards:
-            print("Product card: ", pc)
-            print("URL? ", pc.get_attribute("href"))
-            print()
 
         # loop through each product on the page 
         if product_cards:
             print("product cards")
             for card in product_cards:
-                # end loop if limit reached
-                if count >= self.limit and self.limit > 0:
-                    break 
-
-                print("Processing card")
                 card_url = card.find_elements(By.TAG_NAME, "a")
-                print("Raw card url: ", card_url)
 
                 if len(card_url) > 1:
-                    # save the product url to go back to later 
-                    url = card_url[1].get_attribute('href')
+                    url = card_url[1].get_attribute("href")
                     urls.append(url)
+                    # print("Url? ", url)
 
-                    print("card url", url)
-
-                count += 1
-
-        driver.quit()
 
         print("Ended fetch urls")
         return urls
@@ -240,6 +223,14 @@ class WebScraper:
 
                 counter += 1
 
+        elif urls and not driver:
+            print("Only urls successful")
+        elif driver and not urls:
+            print("Only driver successful")
+        else:
+            print("Complete error")
+
+
         driver.quit()
         return self.products
 
@@ -284,3 +275,29 @@ class WebScraper:
 
         print("Successfully cached data to:", f"{self.search}-data.json")
 
+    def search(self, target, key="title"):
+        left = 0
+        right = len(self.products)
+        found = False
+
+        while left <= right and not found:
+            middle = (left + right) // 2
+
+            if getattr(self.products[middle], key) == target:
+                return middle
+            elif getattr(self.products[middle], key) < target:
+                left = middle + 1
+            else:
+                right = middle - 1
+
+    # A basic bubble sort to sort the products - Advanced Higher Concept
+    def sort(self, key="price"):
+        n = len(self.products)
+        swapped = True
+        while swapped and n >= 0:
+            swapped = False 
+            for i in range(n-1):
+                # Search by the key inputted using getattr: this is instead of self.products[i].key. This means I dont have to write multiple search algorithms 
+                if getattr(self.products[i], key) > getattr(self.products[i + 1], key):
+                    self.products[i], self.products[i+1] = self.products[i+1], self.products[i]
+            n -= 1
