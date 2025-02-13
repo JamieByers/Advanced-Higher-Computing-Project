@@ -31,7 +31,7 @@ class WebScraper:
 
         # Modify chrome options for the chrome driver
         chrome_options = Options()
-        # chrome_options.add_argument("--headless")  # Run in headless mode
+        chrome_options.add_argument("--headless")  # Run in headless mode
         chrome_options.add_argument("--disable-gpu")  # Better performance
 
         chrome_options.add_argument('--enable-logging')
