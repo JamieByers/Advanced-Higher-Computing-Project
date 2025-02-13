@@ -1,3 +1,5 @@
+from re import split
+import threading
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -31,7 +33,7 @@ class WebScraper:
 
         # Modify chrome options for the chrome driver
         chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode
+        # chrome_options.add_argument("--headless")  # Run in headless mode
         chrome_options.add_argument("--disable-gpu")  # Better performance
 
         chrome_options.add_argument('--enable-logging')
@@ -128,7 +130,7 @@ class WebScraper:
             # go to product by url
             driver.get(url)
             # wait for page content to load
-            wait = WebDriverWait(driver, 20)
+            wait = WebDriverWait(driver, 10)
 
             # wait until the product data has loaded
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")))
@@ -195,7 +197,52 @@ class WebScraper:
             print("Scrape product function failed (line 175)", e)
             return None
 
-    def scrape(self, caching=True):
+    def threaded_individual_scrape(self, url, driver, caching):
+        product = self.scrape_product(url=url, driver=driver)
+
+        # if information is found
+        if product:
+            product.display()
+            self.products.append(product)
+            if caching:
+                # save the data to a json file
+                self.cache(product)
+                print()
+
+    def split_array(self, arr, n):
+        base_size = len(arr) // n  # Minimum size of each subarray
+        sizes = [base_size] * n    # Start with equal-sized subarrays
+        sizes[-1] += len(arr) % n  # Add the remainder to the last subarray
+
+        result = []
+        index = 0
+        for size in sizes:
+            result.append(arr[index:index + size])
+            index += size
+        return result
+
+    def thread_scrape(self, caching=True):
+        urls = self.fetch_urls()
+        urls = urls[:min(self.limit, len(urls))]
+
+        max_threads = 5
+
+        split_urls = self.split_array(urls, max_threads)
+
+        threads = []
+        for thread_index in range(max_threads):
+            driver = self.initialise_driver()
+            thread = threading.Thread(target=self.thread_helper, args=(split_urls[thread_index], driver, caching))
+            threads.append(thread)
+            thread.start()
+
+
+    def thread_helper(self, urls, driver, caching):
+        for url in urls:
+            self.threaded_individual_scrape(url, driver, caching)
+
+
+    def basic_scrape(self, caching=True):
         print("Scraping")
         # get all product urls
         urls = self.fetch_urls()
@@ -222,17 +269,7 @@ class WebScraper:
                     break
 
                 print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
-                # scrape product information
-                product = self.scrape_product(url=url, driver=driver)
-
-                # if information is found
-                if product:
-                    product.display()
-                    self.products.append(product)
-                    if caching:
-                        # save the data to a json file
-                        self.cache(product)
-                        print()
+                self.threaded_individual_scrape(url, driver, caching)
 
                 counter += 1
 
@@ -246,6 +283,12 @@ class WebScraper:
 
         driver.quit()
         return self.products
+
+    def scrape(self, threading=False, caching=True):
+        if threading:
+            self.thread_scrape(caching)
+        else:
+            self.basic_scrape(caching)
 
 
     def cache(self, product):
