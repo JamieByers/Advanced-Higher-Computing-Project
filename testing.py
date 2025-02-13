@@ -1,14 +1,38 @@
-from web_scraper import WebScraper
+import json
+from product import Product
 
-wbs = WebScraper(search="Boots", limit=5)
+def search(products, target, key="title"):
+    left = 0
+    right = len(products)-1
+    found = False
 
-for i in range(5):
-    try:
-        urls = wbs.fetch_urls()
-        if urls:
-            print("Successful!!!")
+    while left <= right and not found:
+        middle = (left + right) // 2
+
+        print("nor: ", products[middle].title)
+        print("curr: ", getattr(products[middle], key))
+        if getattr(products[middle], key) == target:
+            found = True
+            return middle
+        elif getattr(products[middle], key) < target:
+            left = middle + 1
         else:
-            print("Unsuccessful :(")
-    except:
-        
-        print("Unsuccessful :(")
+            right = middle - 1
+
+    return -1 
+
+
+products = []
+with open("boots-data.json", "r") as file:
+    js = json.loads(file.read())
+    for p in js:
+        product = Product()
+        product.productify(p)
+
+        products.append(product)
+
+products = [p.title for p in products]
+print(len(products))
+print(len(set(products)))
+
+print(search(products, "New look mid calf length boots. Size 5"))

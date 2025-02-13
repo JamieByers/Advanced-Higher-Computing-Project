@@ -208,7 +208,7 @@ class WebScraper:
                 if counter >= self.limit and self.limit > 0:
                     break
 
-                print(f"Product {i}/{len(urls) if not self.limit else self.limit}")
+                print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
                 # scrape product information 
                 product = self.scrape_product(url=url, driver=driver)
 
@@ -290,14 +290,19 @@ class WebScraper:
             else:
                 right = middle - 1
 
-    # A basic bubble sort to sort the products - Advanced Higher Concept
+    # Advanced Higher Concept - Bubble Sort Algorithm 
     def sort(self, key="price"):
         n = len(self.products)
-        swapped = True
-        while swapped and n >= 0:
-            swapped = False 
+        while n > 1: # Only sort if there are products to sort 
+            swapped = False
             for i in range(n-1):
-                # Search by the key inputted using getattr: this is instead of self.products[i].key. This means I dont have to write multiple search algorithms 
+                # Search by the key inputted using getattr: this is instead of self.products[i].key. This means I dont have to write multiple search algorithms
                 if getattr(self.products[i], key) > getattr(self.products[i + 1], key):
                     self.products[i], self.products[i+1] = self.products[i+1], self.products[i]
+                    swapped = True
+                print()
+
+            if not swapped:
+                break  
+
             n -= 1

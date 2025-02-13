@@ -1,4 +1,4 @@
-# Advanced Higher Concept
+# Advanced Higher Concept - Object Oriented Programming
 class Product:
     def __init__(
         self,
@@ -53,3 +53,20 @@ class Product:
         print(f"URL: {self.url}")
         print()
         print()
+
+    def productify(self, dict): 
+        self.title = dict.get("title", self.title)
+        self.price = dict.get("price", self.price)
+        self.buyer_protection_price = dict.get("buyer_protection_price", self.buyer_protection_price)
+        self.postage = dict.get("postage", self.postage)
+        self.brand = dict.get("brand", self.brand)
+        self.colour = dict.get("colour", self.colour)
+        self.size = dict.get("size", self.size)
+        self.quality = dict.get("quality", self.quality)
+        self.condition = dict.get("condition", self.condition)
+        self.location = dict.get("location", self.location)
+        self.payment_options = dict.get("payment_options", self.payment_options)
+        self.views = dict.get("views", self.views)
+        self.description = dict.get("description", self.description)
+        self.url = dict.get("url", self.url)
+        self.uploaded = dict.get("uploaded", self.uploaded)
