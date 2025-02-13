@@ -19,30 +19,30 @@ class WebScraper:
         self.limit = limit
 
     def input_validate(self) -> str:
-        # remove trailing spaces 
+        # remove trailing spaces
         search = self.search.strip()
-        # replace spaces with %20 to make the search input suitable for the url 
+        # replace spaces with %20 to make the search input suitable for the url
         search.replace(" ", "%20")
         return search
 
     def initialise_driver(self):
 
-        # These settings are specfic for the scraper to run on a github codespace. 
+        # These settings are specfic for the scraper to run on a github codespace.
 
         # Modify chrome options for the chrome driver
         chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode
+        # chrome_options.add_argument("--headless")  # Run in headless mode
         chrome_options.add_argument("--disable-gpu")  # Better performance
 
         chrome_options.add_argument('--enable-logging')
         chrome_options.add_argument('--v=1')
-        chrome_options.add_argument('--no-sandbox')       
+        chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
 
         # Use a temporary directory for the user data
-        user_data_dir = tempfile.mkdtemp() 
+        user_data_dir = tempfile.mkdtemp()
         chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-        
+
         return webdriver.Chrome(options=chrome_options)
 
 
@@ -52,9 +52,21 @@ class WebScraper:
         # Initialize the driver
         driver = self.initialise_driver()
         driver.get(self.url)
-
         # Wait for the product grid to load and get each grid item
         wait = WebDriverWait(driver, 10)
+
+        # wait until cookies appear
+        accept_button = wait.until(
+            EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
+        )
+
+        time.sleep(1)
+
+        # click "Accept Cookies" button
+        accept_button.click()
+
+        print("Accepted cookies")
+
         time.sleep(1)
         product_cards = wait.until(
             EC.presence_of_all_elements_located(
@@ -66,17 +78,18 @@ class WebScraper:
 
         urls = []
 
-        # loop through each product on the page 
         if product_cards:
-            print("product cards")
             for card in product_cards:
-                card_url = card.find_elements(By.TAG_NAME, "a")
+                feed_grid_item_content = card.find_element(By.CLASS_NAME, "feed-grid__item-content")
+                new_item_box__container = feed_grid_item_content.find_element(By.CLASS_NAME, "new-item-box__container")
+                new_item_box__image_container = new_item_box__container.find_element(
+                    By.CSS_SELECTOR, ".u-position-relative.u-min-height-none.u-flex-auto.new-item-box__image-container"
+                )
+                link = new_item_box__image_container.find_element(By.TAG_NAME, "a")
+                url = link.get_attribute("href")
+                urls.append(url)
 
-                if len(card_url) > 1:
-                    url = card_url[1].get_attribute("href")
-                    urls.append(url)
-                    # print("Url? ", url)
-
+                print(url)
 
         print("Ended fetch urls")
         return urls
@@ -112,7 +125,7 @@ class WebScraper:
 
     def scrape_product(self, url: str, driver: webdriver.Chrome):
         try:
-            # go to product by url 
+            # go to product by url
             driver.get(url)
             # wait for page content to load
             wait = WebDriverWait(driver, 20)
@@ -156,7 +169,7 @@ class WebScraper:
             postage = float(postage.split("£")[-1])
             product.postage = postage
 
-            # collect available details on the page and store them in a hashmap 
+            # collect available details on the page and store them in a hashmap
             product_details = {}
             n = len(details)
             while n > 0:
@@ -184,16 +197,16 @@ class WebScraper:
 
     def scrape(self, caching=True):
         print("Scraping")
-        # get all product urls 
+        # get all product urls
         urls = self.fetch_urls()
 
         # create new chrome driver
         driver = self.initialise_driver()
-        
-        # this counter will be used as a limiter 
+
+        # this counter will be used as a limiter
         counter = 0
 
-        # if urls were found and the driver was created correctly 
+        # if urls were found and the driver was created correctly
         if urls and driver:
             print("urls and drivers ok")
             # accept cookies on the first url but dont scrape, this is just to have cookies accepted
@@ -202,17 +215,17 @@ class WebScraper:
             if cookies_accepted:
                 print("cookies function ran properly")
 
-            # loop through for index of url and actual url 
+            # loop through for index of url and actual url
             for i, url in enumerate(urls):
                 # if the limit has been reached end scraping
                 if counter >= self.limit and self.limit > 0:
                     break
 
                 print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
-                # scrape product information 
+                # scrape product information
                 product = self.scrape_product(url=url, driver=driver)
 
-                # if information is found 
+                # if information is found
                 if product:
                     product.display()
                     self.products.append(product)
@@ -236,7 +249,7 @@ class WebScraper:
 
 
     def cache(self, product):
-        # create file name for the data 
+        # create file name for the data
         file_name = f"{self.search}-data.json"
 
         # if the file doesnt already exist, make one
@@ -253,13 +266,13 @@ class WebScraper:
             except json.JSONDecodeError:
                 products = []
 
-            # add the product in a hashmap format 
+            # add the product in a hashmap format
             pd = product.__dict__
             if pd not in products:
                 products.append(pd)
 
             file.seek(0)
-            # write the product data in a json format 
+            # write the product data in a json format
             json.dump(products, file, indent=4)
 
         print("Cached product: ", product.title)
@@ -275,7 +288,7 @@ class WebScraper:
 
         print("Successfully cached data to:", f"{self.search}-data.json")
 
-    def search(self, target, key="title"):
+    def binary_search(self, target, key="title"):
         left = 0
         right = len(self.products)
         found = False
@@ -290,10 +303,10 @@ class WebScraper:
             else:
                 right = middle - 1
 
-    # Advanced Higher Concept - Bubble Sort Algorithm 
+    # Advanced Higher Concept - Bubble Sort Algorithm
     def sort(self, key="price"):
         n = len(self.products)
-        while n > 1: # Only sort if there are products to sort 
+        while n > 1: # Only sort if there are products to sort
             swapped = False
             for i in range(n-1):
                 # Search by the key inputted using getattr: this is instead of self.products[i].key. This means I dont have to write multiple search algorithms
@@ -303,6 +316,6 @@ class WebScraper:
                 print()
 
             if not swapped:
-                break  
+                break
 
             n -= 1
