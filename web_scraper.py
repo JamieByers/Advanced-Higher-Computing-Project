@@ -331,20 +331,23 @@ class WebScraper:
 
         print("Successfully cached data to:", f"{self.search}-data.json")
 
-    def binary_search(self, target, key="title"):
+    def search(self, target, key="price"):
         left = 0
-        right = len(self.products)
+        right = len(self.products)-1
         found = False
 
         while left <= right and not found:
             middle = (left + right) // 2
 
             if getattr(self.products[middle], key) == target:
+                found = True
                 return middle
             elif getattr(self.products[middle], key) < target:
                 left = middle + 1
             else:
                 right = middle - 1
+
+        return -1 
 
     # Advanced Higher Concept - Bubble Sort Algorithm
     def sort(self, key="price"):

@@ -2,22 +2,6 @@ class Searcher:
     def __init__(self, products):
         self.products = products
 
-
-    def search(self, target, value):
-        left = 0
-        right = len(self.products)
-        found = False
-
-        while left <= right and not found:
-            middle = (left + right) // 2
-
-            if getattr(self.products[middle],value) == target:
-                return middle
-            elif getattr(self.products[middle],value) < target:
-                left = middle + 1
-            else:
-                right = middle - 1
-
     def multi_search(self, arr, target, value):
         if not arr:
             return []
