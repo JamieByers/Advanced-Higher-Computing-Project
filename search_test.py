@@ -66,13 +66,21 @@ with open("boots-data.json", "r") as file:
 
 sort(products)
 
+counter = 0
 for (param, value) in hash.items():
     print(f"Looking for {param} with value of '{value}'")
     
     sort(products, key=param)
     index = search(products, target=value, key=param)
 
-    print(index)
     products[index].display()
 
-    time.sleep(5)
+    if getattr(products[index], param) == value:
+        print("TEST CASE PASSED")
+        counter += 1
+    else:
+        print("TEST CASE FAILED")
+
+    print()
+
+print(f"Test cases passed: {counter}/{len(hash)}")
