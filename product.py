@@ -54,6 +54,11 @@ class Product:
         print()
         print()
 
+    def minimal_display(self):
+        print(f"Title: {self.title}")
+        print(f"Price: £{self.price:.2f}")
+        print(f"URL: {self.url}")
+        
     def productify(self, dict): 
         self.title = dict.get("title", self.title)
         self.price = dict.get("price", self.price)

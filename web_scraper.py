@@ -14,15 +14,15 @@ from product import Product
 
 
 class WebScraper:
-    def __init__(self, search: str, limit=-1) -> None:
-        self.search: str = search
+    def __init__(self, search_input: str, limit=-1) -> None:
+        self.search_input: str = search_input
         self.url = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
         self.products = []
         self.limit = limit
 
     def input_validate(self) -> str:
         # remove trailing spaces
-        search = self.search.strip()
+        search = self.search_input.strip()
         # replace spaces with %20 to make the search input suitable for the url
         search.replace(" ", "%20")
         return search
@@ -236,6 +236,8 @@ class WebScraper:
             threads.append(thread)
             thread.start()
 
+        return self.products
+
 
     def thread_helper(self, urls, driver, caching):
         for url in urls:
@@ -286,14 +288,14 @@ class WebScraper:
 
     def scrape(self, threading=False, caching=True):
         if threading:
-            self.thread_scrape(caching)
+            return self.thread_scrape(caching)
         else:
-            self.basic_scrape(caching)
+            return self.basic_scrape(caching)
 
 
     def cache(self, product):
         # create file name for the data
-        file_name = f"{self.search}-data.json"
+        file_name = f"{self.search_input}-data.json"
 
         # if the file doesnt already exist, make one
         if not os.path.exists(file_name):
@@ -326,23 +328,23 @@ class WebScraper:
 
         total_json = [product_object.__dict__ for product_object in self.products]
 
-        with open(f"{self.search}-data.json", "w+") as file:
+        with open(f"{self.search_input}-data.json", "w+") as file:
             json.dump(total_json, file, indent=4)
 
-        print("Successfully cached data to:", f"{self.search}-data.json")
+        print("Successfully cached data to:", f"{self.search_input}-data.json")
 
-    def search(self, target, key="price"):
+    def search(self, target: str, key="price"):
         left = 0
         right = len(self.products)-1
-        found = False
+        target = target.strip().lower()
 
-        while left <= right and not found:
+        while left <= right:
             middle = (left + right) // 2
-
-            if getattr(self.products[middle], key) == target:
-                found = True
+            current_product = getattr(self.products[middle], key).strip().lower() if isinstance(getattr(self.products[middle], key), str) else getattr(self.products[middle], key)
+            print("Current product: ", current_product)
+            if current_product == target:
                 return middle
-            elif getattr(self.products[middle], key) < target:
+            elif current_product < target:
                 left = middle + 1
             else:
                 right = middle - 1
@@ -365,3 +367,5 @@ class WebScraper:
                 break
 
             n -= 1
+
+        return self.products
