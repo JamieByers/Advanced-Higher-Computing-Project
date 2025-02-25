@@ -29,7 +29,7 @@ limit = 5
 scraper = WebScraper(search_input=search_input, limit=limit)
 
 # Scrape the products
-products = scraper.scrape(threading=False, caching=True)
+products = scraper.scrape(threading=True, caching=True)
 
 search_or_sort = str(input("Would you like to search or sort the products found: "))
 search_or_sort = search_or_sort.strip().lower()

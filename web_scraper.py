@@ -76,7 +76,6 @@ class WebScraper:
             )
         )
 
-        print("Product cards found? ", len(product_cards))
 
         urls = []
 
@@ -126,126 +125,77 @@ class WebScraper:
             return False
 
     def scrape_product(self, url: str, driver: webdriver.Chrome):
-        try:
-            # go to product by url
-            driver.get(url)
-            # wait for page content to load
-            wait = WebDriverWait(driver, 10)
+        # go to product by url
+        driver.get(url)
+        # wait for page content to load
+        wait = WebDriverWait(driver, 10)
 
-            # wait until the product data has loaded
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")))
-            time.sleep(1)
+        # wait until the product data has loaded
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")))
+        time.sleep(1)
 
-            # find the main information div
-            product_info = driver.find_element(By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")
+        # find the main information div
+        product_info = driver.find_element(By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")
 
-            # find the other main information div
-            summary = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-page-summary-plugin']").text.split("\n")
+        # find the other main information div
+        summary = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-page-summary-plugin']").text.split("\n")
 
-            # create new instance of product
-            product = Product()
+        # create new instance of product
+        product = Product()
 
-            title = summary[0]
-            product.title = title
+        title = summary[0]
+        product.title = title
 
-            size_quality = summary[1].split("·")
+        size_quality = summary[1].split("·")
 
-            size = size_quality[0]
-            product.size = size
+        size = size_quality[0]
+        product.size = size
 
+        
+        if len(size_quality) > 1:
             quality = size_quality[1]
             product.quality = quality
+        else:
+            product.quality = ""
 
-            pricing = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-sidebar-price-container']").text.split("\n")
-            product.price = float(pricing[0][1:])
-            product.buyer_protection_price = float(pricing[1][1:])
+        pricing = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-sidebar-price-container']").text.split("\n")
+        product.price = float(pricing[0][1:])
+        product.buyer_protection_price = float(pricing[1][1:])
 
-            description = product_info.find_element(By.CSS_SELECTOR, "div[itemprop='description']").text
-            product.description = description
+        description = product_info.find_element(By.CSS_SELECTOR, "div[itemprop='description']").text
+        product.description = description
 
-            details_list = product_info.find_element(By.CSS_SELECTOR, "div[class='details-list details-list--details']")
-            details = details_list.find_elements(By.CSS_SELECTOR, "div[class='details-list__item-value']")
-            details = [detail.text for detail in details]
+        details_list = product_info.find_element(By.CSS_SELECTOR, "div[class='details-list details-list--details']")
+        details = details_list.find_elements(By.CSS_SELECTOR, "div[class='details-list__item-value']")
+        details = [detail.text for detail in details]
 
-            postage = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
-            postage = float(postage.split("£")[-1])
-            product.postage = postage
+        postage = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
+        postage = float(postage.split("£")[-1])
+        product.postage = postage
 
-            # collect available details on the page and store them in a hashmap
-            product_details = {}
+        # collect available details on the page and store them in a hashmap
+        product_details = {}
+        n = len(details)
+        while n > 0:
+            val, key = details.pop(), details.pop()
+            product_details[key] = val
+
             n = len(details)
-            while n > 0:
-                val, key = details.pop(), details.pop()
-                product_details[key] = val
 
-                n = len(details)
+        # store the data from the hashmap into the Product instance and if there is no data give a default value
+        product.uploaded = product_details.get("Uploaded", "")
+        product.condition = product_details.get("Condition", "")
+        product.brand = product_details.get("Brand", "")
+        product.location = product_details.get("Location", "")
+        product.payment_options = product_details.get("Payment options", "")
+        product.colour = product_details.get("Colour", "")
+        product.views = product_details.get("Views", 0.0)
+        product.url = url
 
-            # store the data from the hashmap into the Product instance and if there is no data give a default value
-            product.uploaded = product_details.get("Uploaded", "")
-            product.condition = product_details.get("Condition", "")
-            product.brand = product_details.get("Brand", "")
-            product.location = product_details.get("Location", "")
-            product.payment_options = product_details.get("Payment options", "")
-            product.colour = product_details.get("Colour", "")
-            product.views = product_details.get("Views", 0.0)
-            product.url = url
-
-            return product
-
-
-        except Exception as e:
-            print("Scrape product function failed (line 175)", e)
-            return None
-
-    def threaded_individual_scrape(self, url, driver, caching):
-        product = self.scrape_product(url=url, driver=driver)
-
-        # if information is found
-        if product:
-            product.display()
-            self.products.append(product)
-            if caching:
-                # save the data to a json file
-                self.cache(product)
-                print()
-
-    def split_array(self, arr, n):
-        base_size = len(arr) // n  # Minimum size of each subarray
-        sizes = [base_size] * n    # Start with equal-sized subarrays
-        sizes[-1] += len(arr) % n  # Add the remainder to the last subarray
-
-        result = []
-        index = 0
-        for size in sizes:
-            result.append(arr[index:index + size])
-            index += size
-        return result
-
-    def thread_scrape(self, caching=True):
-        urls = self.fetch_urls()
-        urls = urls[:min(self.limit, len(urls))]
-
-        max_threads = 5
-
-        split_urls = self.split_array(urls, max_threads)
-
-        threads = []
-        for thread_index in range(max_threads):
-            driver = self.initialise_driver()
-            thread = threading.Thread(target=self.thread_helper, args=(split_urls[thread_index], driver, caching))
-            threads.append(thread)
-            thread.start()
-
-        return self.products
-
-
-    def thread_helper(self, urls, driver, caching):
-        for url in urls:
-            self.threaded_individual_scrape(url, driver, caching)
+        return product
 
 
     def basic_scrape(self, caching=True):
-        print("Scraping")
         # get all product urls
         urls = self.fetch_urls()
 
@@ -257,12 +207,9 @@ class WebScraper:
 
         # if urls were found and the driver was created correctly
         if urls and driver:
-            print("urls and drivers ok")
             # accept cookies on the first url but dont scrape, this is just to have cookies accepted
             # on all future product pages so the unexpected html doesnt get in the way
-            cookies_accepted = self.accept_cookies(url=urls[0], driver=driver)
-            if cookies_accepted:
-                print("cookies function ran properly")
+            _cookies_accepted = self.accept_cookies(url=urls[0], driver=driver)
 
             # loop through for index of url and actual url
             for i, url in enumerate(urls):
@@ -274,13 +221,6 @@ class WebScraper:
                 self.threaded_individual_scrape(url, driver, caching)
 
                 counter += 1
-
-        elif urls and not driver:
-            print("Only urls successful")
-        elif driver and not urls:
-            print("Only driver successful")
-        else:
-            print("Complete error")
 
 
         driver.quit()
@@ -313,25 +253,20 @@ class WebScraper:
 
             # add the product in a hashmap format
             pd = product.__dict__
-            if pd not in products:
+            product_title = pd["title"]
+            product_titles = [p["title"] for p in products]
+
+            if product_title not in product_titles:
                 products.append(pd)
 
             file.seek(0)
-            # write the product data in a json format
-            json.dump(products, file, indent=4)
+            # write the product data in a json format to the json file
+            json_products = json.dumps(products, indent=4)
+            file.write(json_products)
 
-        print("Cached product: ", product.title)
 
 
-    def full_cache(self):
-        import json
 
-        total_json = [product_object.__dict__ for product_object in self.products]
-
-        with open(f"{self.search_input}-data.json", "w+") as file:
-            json.dump(total_json, file, indent=4)
-
-        print("Successfully cached data to:", f"{self.search_input}-data.json")
 
     def search(self, target: str, key="price"):
         left = 0
@@ -353,6 +288,9 @@ class WebScraper:
 
     # Advanced Higher Concept - Bubble Sort Algorithm
     def sort(self, key="price"):
+        print("Before: ")
+        print([getattr(p, key) for p in self.products])
+
         n = len(self.products)
         while n > 1: # Only sort if there are products to sort
             swapped = False
@@ -361,11 +299,82 @@ class WebScraper:
                 if getattr(self.products[i], key) > getattr(self.products[i + 1], key):
                     self.products[i], self.products[i+1] = self.products[i+1], self.products[i]
                     swapped = True
-                print()
 
             if not swapped:
                 break
 
             n -= 1
 
+        print("After: ")
+        print([getattr(p, key) for p in self.products])
         return self.products
+    
+
+
+
+    # --------------------------------- OPTIONAL -------------------------------------------
+
+
+    def threaded_individual_scrape(self, url, driver, caching):
+        product = self.scrape_product(url=url, driver=driver)
+
+        # if information is found
+        if product:
+            product.display()
+            self.products.append(product)
+            if caching:
+                # save the data to a json file
+                self.cache(product)
+                print()
+
+        return product
+
+    def split_array(self, arr, n):
+        base_size = len(arr) // n  # Minimum size of each subarray
+        sizes = [base_size] * n    # Start with equal-sized subarrays
+        sizes[-1] += len(arr) % n  # Add the remainder to the last subarray
+
+        result = []
+        index = 0
+        for size in sizes:
+            result.append(arr[index:index + size])
+            index += size
+        return result
+
+    def thread_scrape(self, caching=True):
+        urls = self.fetch_urls()
+        urls = urls[:min(self.limit, len(urls))]
+
+        max_threads = 5
+
+        split_urls = self.split_array(urls, max_threads)
+
+        threads = []
+        for thread_index in range(max_threads):
+            driver = self.initialise_driver()
+            thread = threading.Thread(target=self.thread_helper, args=(split_urls[thread_index], driver, caching))
+            threads.append(thread)
+            thread.start()
+            thread.join()
+
+        return self.products
+
+
+    def thread_helper(self, urls, driver, caching):
+        products = []
+        for url in urls:
+            product = self.threaded_individual_scrape(url, driver, caching)
+            products.append(product)
+
+        return products
+    
+    
+    def full_cache(self):
+        import json
+
+        total_json = [product_object.__dict__ for product_object in self.products]
+
+        with open(f"{self.search_input}-data.json", "w+") as file:
+            json.dump(total_json, file, indent=4)
+
+        print("Successfully cached data to:", f"{self.search_input}-data.json")
