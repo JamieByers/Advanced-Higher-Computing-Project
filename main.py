@@ -25,7 +25,7 @@ def check_valid_key(key):
 search_input = str(input("Input your search input for your product: "))
 
 # Create instance of my web scraper
-limit = 5
+limit = -1
 scraper = WebScraper(search_input=search_input, limit=limit)
 
 # Scrape the products
