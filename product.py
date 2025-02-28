@@ -1,22 +1,7 @@
-# Advanced Higher Concept - Object Oriented Programming
+# Advanced Higher Concept - Object Oriented Programming - Product Object
 class Product:
     def __init__(
-        self,
-        title: str = "",
-        price: float = 0.0,
-        buyer_protection_price: float = 0.0,
-        postage: float = 0.0,
-        brand: str = "",
-        colour: str = "",
-        size: str = "",
-        quality: str = "",
-        condition: str = "",
-        location: str = "",
-        payment_options: str = "",
-        views: int = 0,
-        description: str = "",
-        url: str = "",
-        uploaded: str = "",
+        self, title: str = "", price: float = 0.0, buyer_protection_price: float = 0.0, postage: float = 0.0, brand: str = "", colour: str = "", size: str = "", quality: str = "", condition: str = "", location: str = "", payment_options: str = "", views: int = 0, description: str = "", url: str = "", uploaded: str = "",
     ):
         self.title = title
         self.price = price

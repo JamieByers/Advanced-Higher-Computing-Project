@@ -2,6 +2,7 @@ import time
 # Import my web scraper
 from web_scraper import WebScraper
 
+# checks if inputted key is valid
 def check_valid_key(key): 
     if key in ["title",
                 "price",
@@ -31,21 +32,24 @@ scraper = WebScraper(search_input=search_input, limit=limit)
 # Scrape the products
 products = scraper.scrape(threading=True, caching=True)
 
-search_or_sort = str(input("Would you like to search or sort the products found: "))
-search_or_sort = search_or_sort.strip().lower()
+print(f"Found {len(products)} Products")
 
-while search_or_sort not in ["search", "sort"]:
-    search_or_sort = str(input("Would you like to search or sort the products found: "))
+# Decide between searching the products found or searching them
+decision = str(input("Would you like to search or sort the products found: "))
+decision = decision.strip().lower()
 
-if search_or_sort == "search":
-    key = str(input("What value would you like to search by (title by default): "))
+while decision not in ["search", "sort"]:
+    decision = str(input("Would you like to search or sort the products found: "))
+
+if decision == "search":
+    key = str(input("What value would you like to search by (price by default): "))
     if not key:
         key = "title"
 
     while not check_valid_key(key):
-        key = str(input("What would you like to search by (title by default): "))
+        key = str(input("What would you like to search by (price by default): "))
         if not key:
-            key = "title"
+            key = "price"
 
     target = str(input("What would you like to search for: "))
 
@@ -60,7 +64,7 @@ if search_or_sort == "search":
     else:
         print("Product not found")
 
-elif search_or_sort == "sort":
+elif decision == "sort":
     key = str(input("What would you like to sort by (price by default): "))
     if not key:
         key = "price"
@@ -70,9 +74,17 @@ elif search_or_sort == "sort":
         if not key:
             key = "price"
 
-    sorted_products = scraper.sort(key)
+    descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default): "))
+    while descending_or_ascending not in ["ascending", "descending"] :
+        descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default)"))
+
+    if descending_or_ascending == "ascending" or descending_or_ascending == "": 
+        sorted_products = scraper.ascending_sort(key)
+    else: 
+        sorted_products = scraper.descending_sort(key)
+
     if sorted_products:
-        print(f"Heres your product information sorted by {key}")
+        print(f"Heres the sorted product information sorted by {key}: \n")
         for sp in sorted_products:
             sp.minimal_display()
     else:
@@ -80,4 +92,4 @@ elif search_or_sort == "sort":
 
 
 else:
-    raise RuntimeError("Expected search_or_sort to be either search or sort, found: ", search_or_sort)
+    raise RuntimeError("Expected search or sort to be either search or sort, found: ", decision)

@@ -49,7 +49,7 @@ class WebScraper:
 
 
     def fetch_urls(self):
-        print("Fetching urls")
+        # print("Fetching urls")
 
         # Initialize the driver
         driver = self.initialise_driver()
@@ -67,7 +67,7 @@ class WebScraper:
         # click "Accept Cookies" button
         accept_button.click()
 
-        print("Accepted cookies")
+        # print("Accepted cookies")
 
         time.sleep(1)
         product_cards = wait.until(
@@ -90,15 +90,15 @@ class WebScraper:
                 url = link.get_attribute("href")
                 urls.append(url)
 
-                print(url)
+                # print(url)
 
-        print("Ended fetch urls")
+        # print("Ended fetch urls")
         return urls
 
 
 
     def accept_cookies(self, url: str, driver: webdriver.Chrome):
-        print("Accepting cookies")
+        # print("Accepting cookies")
         try:
             driver.get(url)
             wait = WebDriverWait(driver, 10)
@@ -116,7 +116,7 @@ class WebScraper:
 
             time.sleep(1)
 
-            print("Accepted cookies")
+            # print("Accepted cookies")
 
             return True
 
@@ -217,7 +217,7 @@ class WebScraper:
                 if counter >= self.limit and self.limit > 0:
                     break
 
-                print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
+                # print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
                 self.threaded_individual_scrape(url, driver, caching)
 
                 counter += 1
@@ -290,11 +290,11 @@ class WebScraper:
         return -1 
 
     # Advanced Higher Concept - Bubble Sort Algorithm
-    def sort(self, key="price"):
+    def ascending_sort(self, key="price"):
 
         # print unsorted array
-        print("Before: ")
-        print([getattr(p, key) for p in self.products]) # print only the key value of the product e.g only the product prices 
+        # print("Before: ")
+        # print([getattr(p, key) for p in self.products]) # print only the key value of the product e.g only the product prices 
 
         swapped = True
         n = len(self.products)
@@ -309,8 +309,32 @@ class WebScraper:
             n -= 1
 
         # print sorted array
-        print("After: ")
-        print([getattr(p, key) for p in self.products])
+        # print("After: ")
+        # print([getattr(p, key) for p in self.products])
+        return self.products
+    
+    # Advanced Higher Concept - Bubble Sort Algorithm
+    def descending_sort(self, key="price"):
+
+        # print unsorted array
+        # print("Before: ")
+        # print([getattr(p, key) for p in self.products]) # print only the key value of the product e.g only the product prices 
+
+        swapped = True
+        n = len(self.products)
+        while n > 1 and swapped == True: # Only sort if there are products to sort and if the array is not sorted 
+            swapped = False
+            for i in range(n-1):
+                # Search by the key inputted using getattr: this is instead of self.products[i].key. This means I dont have to write multiple search algorithms
+                if getattr(self.products[i], key) < getattr(self.products[i + 1], key):
+                    self.products[i], self.products[i+1] = self.products[i+1], self.products[i]
+                    swapped = True
+
+            n -= 1
+
+        # print sorted array
+        # print("After: ")
+        # print([getattr(p, key) for p in self.products])
         return self.products
     
 
@@ -324,12 +348,12 @@ class WebScraper:
 
         # if information is found
         if product:
-            product.display()
+            # product.display()
             self.products.append(product)
             if caching:
                 # save the data to a json file
                 self.cache(product)
-                print()
+                # print()
 
         return product
 
