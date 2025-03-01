@@ -1,7 +1,7 @@
 # Advanced Higher Concept - Object Oriented Programming - Product Object
 class Product:
     def __init__(
-        self, title: str = "", price: float = 0.0, buyer_protection_price: float = 0.0, postage: float = 0.0, brand: str = "", colour: str = "", size: str = "", quality: str = "", condition: str = "", location: str = "", payment_options: str = "", views: int = 0, description: str = "", url: str = "", uploaded: str = "",
+        self, title: str = "", price: float = 0.0, buyer_protection_price: float = 0.0, postage: float = 0.0, brand: str = "", colour: str = "", size: str = "", quality: str = "", condition: str = "", location: str = "", payment_options: str = "", views: int = 0, description: str = "", url: str = "", uploaded: str = "", search_input: str = "",
     ):
         self.title = title
         self.price = price
@@ -18,6 +18,7 @@ class Product:
         self.url = url
         self.colour = colour
         self.uploaded = uploaded
+        self.search_input = search_input
 
     def display(self):
         print("Product Details:")
@@ -36,6 +37,7 @@ class Product:
         print(f"Description: {self.description}")
         print(f"Uploaded: {self.uploaded}")
         print(f"URL: {self.url}")
+        print(f"Search input: {self.search_input}")
         print()
         print()
 
@@ -60,3 +62,4 @@ class Product:
         self.description = dict.get("description", self.description)
         self.url = dict.get("url", self.url)
         self.uploaded = dict.get("uploaded", self.uploaded)
+        self.search_input = dict.get("search_input", self.search_input)

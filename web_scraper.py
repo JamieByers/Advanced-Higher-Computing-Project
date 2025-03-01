@@ -191,6 +191,7 @@ class WebScraper:
         product.colour = product_details.get("Colour", "")
         product.views = product_details.get("Views", 0.0)
         product.url = url
+        product.search_input = self.search_input
 
         return product
 
