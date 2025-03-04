@@ -18,6 +18,7 @@ def sort(products, key="price"):
 
         n -= 1
 
+# sample data 
 products = []
 with open("boots-data.json", "r") as file:
     js = json.loads(file.read())

@@ -9,6 +9,7 @@ import tempfile
 import time
 import json
 import os
+from db import Database
 
 from product import Product
 
@@ -19,6 +20,7 @@ class WebScraper:
         self.url = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
         self.products = []
         self.limit = limit
+        self.database = Database()
 
     def input_validate(self) -> str:
         # remove trailing spaces
@@ -203,6 +205,8 @@ class WebScraper:
         # create new chrome driver
         driver = self.initialise_driver()
 
+        self.database.initialise()
+
         # this counter will be used as a limiter
         counter = 0
 
@@ -219,7 +223,7 @@ class WebScraper:
                     break
 
                 # print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
-                self.threaded_individual_scrape(url, driver, caching)
+                self.individual_scrape(url, driver, caching)
 
                 counter += 1
 
@@ -340,11 +344,7 @@ class WebScraper:
     
 
 
-
-    # --------------------------------- OPTIONAL -------------------------------------------
-
-
-    def threaded_individual_scrape(self, url, driver, caching):
+    def individual_scrape(self, url, driver, caching):
         product = self.scrape_product(url=url, driver=driver)
 
         # if information is found
@@ -356,7 +356,13 @@ class WebScraper:
                 self.cache(product)
                 # print()
 
+        self.database.insert_product(product.__dict__)
+
         return product
+
+
+    # --------------------------------- OPTIONAL -------------------------------------------
+
 
     def split_array(self, arr, n):
         base_size = len(arr) // n  # Minimum size of each subarray
@@ -374,6 +380,8 @@ class WebScraper:
         urls = self.fetch_urls()
         urls = urls[:min(self.limit, len(urls))]
 
+        self.database.initialise()
+        
         max_threads = 5
 
         split_urls = self.split_array(urls, max_threads)
@@ -392,7 +400,7 @@ class WebScraper:
     def thread_helper(self, urls, driver, caching):
         products = []
         for url in urls:
-            product = self.threaded_individual_scrape(url, driver, caching)
+            product = self.individual_scrape(url, driver, caching)
             products.append(product)
 
         return products

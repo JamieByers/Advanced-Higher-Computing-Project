@@ -35,3 +35,12 @@ CREATE TABLE products (
     url VARCHAR(500) UNIQUE,
     uploaded VARCHAR(255)
 );
+
+
+
+
+
+
+
+
+DELETE FROM products
