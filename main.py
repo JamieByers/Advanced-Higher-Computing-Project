@@ -2,6 +2,8 @@ import time
 # Import my web scraper
 from web_scraper import WebScraper
 from db import Database
+from search import *
+from sort import ascending_sort, descending_sort
 
 def get():
     # set up database
@@ -16,28 +18,10 @@ def get():
     for product in products:
         product.display()
 
-def scrape():
-    # checks if inputted key is valid
-    def check_valid_key(key): 
-        if key in ["title",
-                    "price",
-                    "buyer_protection_price",
-                    "postage",
-                    "brand",
-                    "size",
-                    "quality",
-                    "condition",
-                    "location",
-                    "payment_options",
-                    "views",
-                    "description",
-                    "url",
-                    "colour",
-                    "uploaded",]:
-            return True
-        else:
-            return False
+    return products
 
+def scrape():
+    
     search_input = str(input("Input your search input for your product: "))
 
     # Create instance of my web scraper
@@ -49,7 +33,31 @@ def scrape():
 
     print(f"Found {len(products)} Products")
 
-    # Decide between searching the products found or searching them
+    return products
+
+# checks if inputted key is valid
+def check_valid_key(key): 
+    if key in ["title",
+                "price",
+                "buyer_protection_price",
+                "postage",
+                "brand",
+                "size",
+                "quality",
+                "condition",
+                "location",
+                "payment_options",
+                "views",
+                "description",
+                "url",
+                "colour",
+                "uploaded",]:
+        return True
+    else:
+        return False
+
+def sort_or_search(products):
+     # Decide between searching the products found or searching them
     decision = str(input("Would you like to search or sort the products found: "))
     decision = decision.strip().lower()
 
@@ -125,9 +133,10 @@ while main_decision not in options:
     main_decision = str(input("What would you like to do (options: get existing products: get, scrape new products: scrape): "))
     main_decision= main_decision.lower().strip()
 
+products = []
 match main_decision:
     case "get":
-        get()
+        products = get()
     case 'scrape':
         scrape()    
 
