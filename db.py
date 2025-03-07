@@ -1,5 +1,4 @@
 import mysql.connector
-import json
 from product import Product
 
 class Database:
@@ -58,7 +57,7 @@ class Database:
         if self.is_a_duplicate(product):
             print("Product is a duplicate")
             return 
-
+        
         # sql query to add the product and its data into the database
         sql = """
         INSERT INTO products 
@@ -87,6 +86,7 @@ class Database:
 
         try:
             self.cursor.execute(sql, values)
+            self.connection.commit()
         except mysql.connector.Error as err:
             print("Error:", err)
 

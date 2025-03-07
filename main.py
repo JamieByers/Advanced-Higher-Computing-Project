@@ -1,10 +1,10 @@
-import time 
 # Import my web scraper
 from web_scraper import WebScraper
 from db import Database
 from search import *
 from sort import ascending_sort, descending_sort
 
+# gets existing products from the database
 def get() -> list:
     # set up database
     db = Database()
@@ -20,6 +20,7 @@ def get() -> list:
 
     return products
 
+# scrapes new product data
 def scrape() -> list:
     
     search_input = str(input("Input your search input for your product: "))
@@ -29,7 +30,7 @@ def scrape() -> list:
     scraper = WebScraper(search_input=search_input, limit=limit)
 
     # Scrape the products
-    products = scraper.scrape(threading=True, caching=True)
+    products = scraper.decided_scrape(threading=True, caching=True)
 
     print(f"Found {len(products)} Products")
 
@@ -56,7 +57,6 @@ def check_valid_key(key) -> bool:
     else:
         return False
 
-
 def handle_sort(products):
     key = str(input("What would you like to sort by (price by default): "))
     if not key:
@@ -71,21 +71,22 @@ def handle_sort(products):
     # input validate decision to sort either ascending or descending 
     descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default): "))
 
+    # create default / fallback decision 
     if descending_or_ascending == "": 
         descending_or_ascending = "ascending"
 
     while descending_or_ascending not in ["ascending", "descending"] :
         descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default): "))
+    
+    # show array before sorting 
+    p = [getattr(p, key) for p in products]
+    print("Before sorting: ", p)
 
     # sort by inputted decision 
     if descending_or_ascending == "ascending":
         sorted_products = ascending_sort(products, key)
     else: 
         sorted_products = descending_sort(products, key)
-
-    # show array before sorting 
-    p = [getattr(p, key) for p in products]
-    print("Before sorting: ", p)
 
     # if there are any sorted products display them 
     if sorted_products:
@@ -125,11 +126,12 @@ def handle_search(products):
     else:
         print("Product not found")
 
-
+# choose between scraping new products and getting existing ones from the database
 options = ["get", "scrape"]
 main_decision = str(input("What would you like to do (options: get existing products: get, scrape new products: scrape): "))
 main_decision= main_decision.lower().strip()
 
+# input validate the decision between scraping or getting 
 while main_decision not in options:
     main_decision = str(input("What would you like to do (options: get existing products: get, scrape new products: scrape): "))
     main_decision= main_decision.lower().strip()
@@ -149,9 +151,11 @@ decision = decision.strip().lower()
 while decision not in ["search", "sort"]:
     decision = str(input("Would you like to search or sort the products found: "))
 
+# search the products 
 if decision == "search":
     handle_search(products)
 
+# sort the products 
 elif decision == "sort":
     handle_sort(products)
 

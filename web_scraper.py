@@ -97,8 +97,6 @@ class WebScraper:
         # print("Ended fetch urls")
         return urls
 
-
-
     def accept_cookies(self, url: str, driver: webdriver.Chrome):
         # print("Accepting cookies")
         try:
@@ -197,8 +195,7 @@ class WebScraper:
 
         return product
 
-
-    def basic_scrape(self, caching=True):
+    def scrape(self, caching=True):
         # get all product urls
         urls = self.fetch_urls()
 
@@ -231,16 +228,9 @@ class WebScraper:
         driver.quit()
         return self.products
 
-    def scrape(self, threading=False, caching=True):
-        if threading:
-            return self.thread_scrape(caching)
-        else:
-            return self.basic_scrape(caching)
-
-
     def cache(self, product):
         # create file name for the data
-        file_name = f"{self.search_input}-data.json"
+        file_name = f"product-data/{self.search_input}-data.json"
 
         # if the file doesnt already exist, make one
         if not os.path.exists(file_name):
@@ -285,9 +275,13 @@ class WebScraper:
 
         return product
 
-
     # --------------------------------- OPTIONAL -------------------------------------------
 
+    def decided_scrape(self, threading=False, caching=True):
+        if threading:
+            return self.thread_scrape(caching)
+        else:
+            return self.scrape(caching)
 
     def split_array(self, arr, n):
         base_size = len(arr) // n  # Minimum size of each subarray
@@ -321,7 +315,6 @@ class WebScraper:
 
         return self.products
 
-
     def thread_helper(self, urls, driver, caching):
         products = []
         for url in urls:
@@ -329,7 +322,6 @@ class WebScraper:
             products.append(product)
 
         return products
-    
     
     def full_cache(self):
         import json
