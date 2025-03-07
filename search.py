@@ -19,3 +19,5 @@ def search(products, target: str, key="price"):
 
     print("Product not found")
     return -1 
+
+

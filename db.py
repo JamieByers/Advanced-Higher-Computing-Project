@@ -87,7 +87,6 @@ class Database:
 
         try:
             self.cursor.execute(sql, values)
-            print("Product added successfully!")
         except mysql.connector.Error as err:
             print("Error:", err)
 
@@ -114,11 +113,3 @@ class Database:
         except mysql.connector.Error as err:
             print("Error:", err)
 
-if __name__ == "__main__":
-    # example usage
-    db = Database()
-    db.initialise()
-
-    with open("toy-data.json", "r") as file:
-        products = json.load(file)
-        db.insert_products_to_db(products)

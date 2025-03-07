@@ -5,7 +5,7 @@ from db import Database
 from search import *
 from sort import ascending_sort, descending_sort
 
-def get():
+def get() -> list:
     # set up database
     db = Database()
     db.initialise()
@@ -20,7 +20,7 @@ def get():
 
     return products
 
-def scrape():
+def scrape() -> list:
     
     search_input = str(input("Input your search input for your product: "))
 
@@ -36,7 +36,7 @@ def scrape():
     return products
 
 # checks if inputted key is valid
-def check_valid_key(key): 
+def check_valid_key(key) -> bool: 
     if key in ["title",
                 "price",
                 "buyer_protection_price",
@@ -56,73 +56,74 @@ def check_valid_key(key):
     else:
         return False
 
-def sort_or_search(products):
-     # Decide between searching the products found or searching them
-    decision = str(input("Would you like to search or sort the products found: "))
-    decision = decision.strip().lower()
 
-    # input validate the decision 
-    while decision not in ["search", "sort"]:
-        decision = str(input("Would you like to search or sort the products found: "))
+def handle_sort(products):
+    key = str(input("What would you like to sort by (price by default): "))
+    if not key:
+        key = "price"
 
-    if decision == "search":
-        key = str(input("What value would you like to search by (price by default): "))
-        if not key:
-            key = "title"
-
-        # check if the products can be sorted by inputted key, if not input validate
-        while not check_valid_key(key):
-            key = str(input("What would you like to search by (price by default): "))
-            if not key:
-                key = "price" # default to price
-
-        target = str(input("What would you like to search for: "))
-
-        product_index = scraper.search(target=target, key=key)
-
-        # if the product is found display it 
-        if product_index > -1 and product_index != None:
-            product = products[product_index]
-
-            print(f"Found product with value of {target} for {key}: \n")
-            product.display()
-        else:
-            print("Product not found")
-
-    elif decision == "sort":
+    # check if the products can be sorted by inputted key, if not input validate
+    while not check_valid_key(key):
         key = str(input("What would you like to sort by (price by default): "))
         if not key:
             key = "price"
 
-        # check if the products can be sorted by inputted key, if not input validate
-        while not check_valid_key(key):
-            key = str(input("What would you like to sort by (price by default): "))
-            if not key:
-                key = "price"
+    # input validate decision to sort either ascending or descending 
+    descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default): "))
 
-        # input validate decision to sort either ascending or descending 
+    if descending_or_ascending == "": 
+        descending_or_ascending = "ascending"
+
+    while descending_or_ascending not in ["ascending", "descending"] :
         descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default): "))
-        while descending_or_ascending not in ["ascending", "descending"] :
-            descending_or_ascending = str(input("Would you like to sort by ascending order or by descending order (descending by default)"))
 
-        # sort by inputted decision 
-        if descending_or_ascending == "ascending" or descending_or_ascending == "": 
-            sorted_products = scraper.ascending_sort(key)
-        else: 
-            sorted_products = scraper.descending_sort(key)
+    # sort by inputted decision 
+    if descending_or_ascending == "ascending":
+        sorted_products = ascending_sort(products, key)
+    else: 
+        sorted_products = descending_sort(products, key)
 
-        # if there are any sorted products display them 
-        if sorted_products:
-            print(f"Heres the sorted product information sorted by {key}: \n")
-            for sp in sorted_products:
-                sp.minimal_display()
-        else:
-            print("No products to be sorted")
+    # show array before sorting 
+    p = [getattr(p, key) for p in products]
+    print("Before sorting: ", p)
 
+    # if there are any sorted products display them 
+    if sorted_products:
+        # show array after sorting 
+        ps = [getattr(p, key) for p in sorted_products]
+        print("After sorting: ", ps)
 
+        print(f"Heres the sorted product information sorted by {key}: \n")
+        for sp in sorted_products:
+            sp.minimal_display()
     else:
-        raise RuntimeError("Expected search or sort to be either search or sort, found: ", decision)
+        print("No products to be sorted")
 
+def handle_search(products):
+    key = str(input("What value would you like to search by (price by default): "))
+    if not key:
+        key = "title"
+
+
+    # check if the products can be sorted by inputted key, if not input validate
+    while not check_valid_key(key):
+        key = str(input("What would you like to search by (price by default): "))
+        if not key:
+            key = "price" # default to price
+
+    target = str(input("What would you like to search for: "))
+
+    products = ascending_sort(products, key)
+    product_index = search(products, target=target, key=key)
+
+    # if the product is found display it 
+    if product_index > -1 and product_index != None:
+        product = products[product_index]
+
+        print(f"Found product with value of {target} for {key}: \n")
+        product.display()
+    else:
+        print("Product not found")
 
 
 options = ["get", "scrape"]
@@ -138,5 +139,21 @@ match main_decision:
     case "get":
         products = get()
     case 'scrape':
-        scrape()    
+        products = scrape()
 
+# Decide between searching the products found or searching them
+decision = str(input("Would you like to search or sort the products found: "))
+decision = decision.strip().lower()
+
+# input validate the decision 
+while decision not in ["search", "sort"]:
+    decision = str(input("Would you like to search or sort the products found: "))
+
+if decision == "search":
+    handle_search(products)
+
+elif decision == "sort":
+    handle_sort(products)
+
+else:
+    raise RuntimeError("Expected search or sort to be either search or sort, found: ", decision)
