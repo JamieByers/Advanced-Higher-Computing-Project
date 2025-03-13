@@ -29,7 +29,7 @@ class WebScraper:
         search.replace(" ", "%20")
         return search
 
-    def initialise_driver(self):
+    def initialise_driver(self) -> webdriver.Chrome:
 
         # These settings are specfic for the scraper to run on a github codespace.
 

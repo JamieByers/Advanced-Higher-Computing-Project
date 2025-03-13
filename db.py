@@ -23,7 +23,7 @@ class Database:
         return self.cursor
     
     # check if the inputted product is already in the database
-    def is_a_duplicate(self, product) -> bool:
+    def is_a_duplicate(self, product: Product) -> bool:
         search_input: str = product["search_input"]
 
         # sql query to get all products with inputted search input 
@@ -44,7 +44,7 @@ class Database:
         return False
 
     # add products to database
-    def insert_products_to_db(self, products):
+    def insert_products_to_db(self, products: list[Product]) -> None:
         # add each product to the database individually 
         for product in products:
             self.insert_product(product)
@@ -52,7 +52,7 @@ class Database:
         self.connection.commit()
 
 
-    def insert_product(self, product) -> None:
+    def insert_product(self, product: Product) -> None:
         # check if the product is already in the database
         if self.is_a_duplicate(product):
             print("Product is a duplicate")
@@ -90,7 +90,7 @@ class Database:
         except mysql.connector.Error as err:
             print("Error:", err)
 
-    def get_products_by_search_input(self, search_input) -> list[Product]:
+    def get_products_by_search_input(self, search_input: str) -> list[Product]:
         # sql query to get all of the products which match the inputted search input
         sql: str = "SELECT * FROM products WHERE search_input=%s"
 
