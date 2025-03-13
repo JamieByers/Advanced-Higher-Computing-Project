@@ -17,9 +17,9 @@ from product import Product
 class WebScraper:
     def __init__(self, search_input: str, limit=-1) -> None:
         self.search_input: str = search_input
-        self.url = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
+        self.url: str = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
         self.products = []
-        self.limit = limit
+        self.limit: int = limit
         self.database = Database()
 
     def input_validate(self) -> str:
@@ -49,8 +49,7 @@ class WebScraper:
 
         return webdriver.Chrome(options=chrome_options)
 
-
-    def fetch_urls(self):
+    def fetch_urls(self) -> list[str]:
         # print("Fetching urls")
 
         # Initialize the driver
@@ -89,7 +88,7 @@ class WebScraper:
                     By.CSS_SELECTOR, ".u-position-relative.u-min-height-none.u-flex-auto.new-item-box__image-container"
                 )
                 link = new_item_box__image_container.find_element(By.TAG_NAME, "a")
-                url = link.get_attribute("href")
+                url: str = link.get_attribute("href")
                 urls.append(url)
 
                 # print(url)
@@ -97,7 +96,7 @@ class WebScraper:
         # print("Ended fetch urls")
         return urls
 
-    def accept_cookies(self, url: str, driver: webdriver.Chrome):
+    def accept_cookies(self, url: str, driver: webdriver.Chrome) -> bool:
         # print("Accepting cookies")
         try:
             driver.get(url)
@@ -124,7 +123,7 @@ class WebScraper:
             print("Accept Cookies Failed (line 105): ", e)
             return False
 
-    def scrape_product(self, url: str, driver: webdriver.Chrome):
+    def scrape_product(self, url: str, driver: webdriver.Chrome) -> Product:
         # go to product by url
         driver.get(url)
         # wait for page content to load
@@ -143,34 +142,34 @@ class WebScraper:
         # create new instance of product
         product = Product()
 
-        title = summary[0]
+        title: str = summary[0]
         product.title = title
 
-        size_quality = summary[1].split("·")
+        size_quality: str = summary[1].split("·")
 
-        size = size_quality[0]
+        size: str = size_quality[0]
         product.size = size
 
         
         if len(size_quality) > 1:
-            quality = size_quality[1]
+            quality: str = size_quality[1]
             product.quality = quality
         else:
             product.quality = ""
 
-        pricing = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-sidebar-price-container']").text.split("\n")
+        pricing: list[str] = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-sidebar-price-container']").text.split("\n")
         product.price = float(pricing[0][1:])
         product.buyer_protection_price = float(pricing[1][1:])
 
-        description = product_info.find_element(By.CSS_SELECTOR, "div[itemprop='description']").text
+        description: str = product_info.find_element(By.CSS_SELECTOR, "div[itemprop='description']").text
         product.description = description
 
         details_list = product_info.find_element(By.CSS_SELECTOR, "div[class='details-list details-list--details']")
         details = details_list.find_elements(By.CSS_SELECTOR, "div[class='details-list__item-value']")
-        details = [detail.text for detail in details]
+        details: list[str] = [detail.text for detail in details]
 
-        postage = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
-        postage = float(postage.split("£")[-1])
+        postage: str = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
+        postage: float = float(postage.split("£")[-1])
         product.postage = postage
 
         # collect available details on the page and store them in a hashmap
@@ -195,9 +194,9 @@ class WebScraper:
 
         return product
 
-    def scrape(self, caching=True):
+    def scrape(self, caching=True) -> list[Product]:
         # get all product urls
-        urls = self.fetch_urls()
+        urls: list[str] = self.fetch_urls()
 
         # create new chrome driver
         driver = self.initialise_driver()
@@ -205,13 +204,13 @@ class WebScraper:
         self.database.initialise()
 
         # this counter will be used as a limiter
-        counter = 0
+        counter: int = 0
 
         # if urls were found and the driver was created correctly
         if urls and driver:
             # accept cookies on the first url but dont scrape, this is just to have cookies accepted
             # on all future product pages so the unexpected html doesnt get in the way
-            _cookies_accepted = self.accept_cookies(url=urls[0], driver=driver)
+            self.accept_cookies(url=urls[0], driver=driver)
 
             # loop through for index of url and actual url
             for i, url in enumerate(urls):
@@ -228,9 +227,9 @@ class WebScraper:
         driver.quit()
         return self.products
 
-    def cache(self, product):
+    def cache(self, product) -> None:
         # create file name for the data
-        file_name = f"product-data/{self.search_input}-data.json"
+        file_name: str = f"product-data/{self.search_input}-data.json"
 
         # if the file doesnt already exist, make one
         if not os.path.exists(file_name):
@@ -242,25 +241,25 @@ class WebScraper:
             # if there are products in the file read them and store them
             # in an array, if there are no products use an empty array
             try:
-                products = json.load(file)
+                products: dict = json.load(file)
             except json.JSONDecodeError:
                 products = []
 
             # add the product in a hashmap format
-            pd = product.__dict__
-            product_title = pd["title"]
-            product_titles = [p["title"] for p in products]
+            pd: dict = product.__dict__
+            product_url: str = pd["url"]
+            product_urls: list[str] = [p["url"] for p in products]
 
-            if product_title not in product_titles:
+            if product_url not in product_urls:
                 products.append(pd)
 
             file.seek(0)
             # write the product data in a json format to the json file
-            json_products = json.dumps(products, indent=4)
+            json_products: str = json.dumps(products, indent=4)
             file.write(json_products)
 
-    def individual_scrape(self, url, driver, caching):
-        product = self.scrape_product(url=url, driver=driver)
+    def individual_scrape(self, url, driver, caching) -> Product:
+        product: Product = self.scrape_product(url=url, driver=driver)
 
         # if information is found
         if product:

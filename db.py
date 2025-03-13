@@ -23,15 +23,15 @@ class Database:
         return self.cursor
     
     # check if the inputted product is already in the database
-    def is_a_duplicate(self, product):
-        search_input = product["search_input"]
+    def is_a_duplicate(self, product) -> bool:
+        search_input: str = product["search_input"]
 
         # sql query to get all products with inputted search input 
-        sql = "SELECT * FROM products WHERE search_input=%s"
+        sql: str = "SELECT * FROM products WHERE search_input=%s"
 
         # execute the command
         self.cursor.execute(sql, (search_input,))
-        fetched_products = self.cursor.fetchall()
+        fetched_products: list = self.cursor.fetchall()
 
         # this is the column which url is stored in the database
         url_column_index = 14
@@ -52,20 +52,20 @@ class Database:
         self.connection.commit()
 
 
-    def insert_product(self, product):
+    def insert_product(self, product) -> None:
         # check if the product is already in the database
         if self.is_a_duplicate(product):
             print("Product is a duplicate")
             return 
         
         # sql query to add the product and its data into the database
-        sql = """
+        sql: str = """
         INSERT INTO products 
         (title, price, buyer_protection_price, postage, brand, colour, size, quality, `condition`, location, payment_options, views, description, url, uploaded, search_input) 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
-        values = (
+        values: list = (
             product['title'],
             product['price'],
             product['buyer_protection_price'],
@@ -90,20 +90,20 @@ class Database:
         except mysql.connector.Error as err:
             print("Error:", err)
 
-    def get_products_by_search_input(self, search_input):
+    def get_products_by_search_input(self, search_input) -> list[Product]:
         # sql query to get all of the products which match the inputted search input
-        sql = "SELECT * FROM products WHERE search_input=%s"
+        sql: str = "SELECT * FROM products WHERE search_input=%s"
 
         try:
             self.cursor.execute(sql, (search_input,))
-            fetched_products = self.cursor.fetchall()
+            fetched_products: list = self.cursor.fetchall()
 
-            column_names = [desc[0] for desc in self.cursor.description]
+            column_names: list[str | any] = [desc[0] for desc in self.cursor.description]
             products = []
             
             # turn all of the products recieved into Product objects
             for fetched_product in fetched_products:
-                product_dict = dict(zip(column_names, fetched_product))
+                product_dict: dict = dict(zip(column_names, fetched_product))
                 product = Product()
                 product.productify(product_dict)
                 products.append(product)
