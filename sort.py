@@ -1,7 +1,8 @@
 # Advanced Higher Concept - Bubble Sort Algorithm (Ascending order)
 def ascending_sort(products, key="price"):
-    swapped = True
-    n = len(products)
+    swapped = True # initially set swapped to true 
+    n = len(products) # get the length of the array and store it in the variable n 
+
     while n > 1 and swapped == True: # Only sort if there are products to sort and if the array is not sorted 
         swapped = False
         for i in range(n-1):
@@ -12,12 +13,13 @@ def ascending_sort(products, key="price"):
 
         n -= 1
 
-    return products
+    return products # return the sorted products
 
 # Advanced Higher Concept - Bubble Sort Algorithm (Descending order)
 def descending_sort(products, key="price"):
-    swapped = True
-    n = len(products)
+    swapped = True # initially set swapped to true 
+    n = len(products) # get the length of the array and store it in the variable n 
+
     while n > 1 and swapped == True: # Only sort if there are products to sort and if the array is not sorted 
         swapped = False
         for i in range(n-1):
@@ -28,6 +30,6 @@ def descending_sort(products, key="price"):
 
         n -= 1
 
-    return products
+    return products # return the sorted products
 
 

@@ -259,6 +259,7 @@ class WebScraper:
             file.write(json_products)
 
     def individual_scrape(self, url, driver, caching) -> Product:
+        # scrape the product information of the associated url 
         product: Product = self.scrape_product(url=url, driver=driver)
 
         # if information is found
@@ -266,13 +267,13 @@ class WebScraper:
             # product.display()
             self.products.append(product)
             if caching:
-                # save the data to a json file
+                # save the data to a json file to be used for testing
                 self.cache(product)
-                # print()
 
+        # add the scraped product into the database
         self.database.insert_product(product.__dict__)
 
-        return product
+        return product # return the product data in a product object
 
     # --------------------------------- OPTIONAL -------------------------------------------
 
