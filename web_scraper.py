@@ -217,9 +217,6 @@ class WebScraper:
         # create new chrome driver
         driver = self.initialise_driver()
 
-        # setup Database
-        self.database.initialise()
-
         # this counter will be used as a limiter
         counter: int = 0
 
@@ -318,8 +315,6 @@ class WebScraper:
     def thread_scrape(self, caching=True):
         urls = self.fetch_urls()
         urls = urls[:min(self.limit, len(urls))]
-
-        self.database.initialise()
 
         max_threads = 5
 

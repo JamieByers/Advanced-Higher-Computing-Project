@@ -18,7 +18,7 @@ def sort(products, key="price"):
 
         n -= 1
 
-# sample data 
+# sample data
 products = []
 with open("boots-data.json", "r") as file:
     js = json.loads(file.read())
@@ -66,7 +66,7 @@ class TestProductSorter(unittest.TestCase):
                 product = Product()
                 product.productify(p)
                 self.products.append(product)
-    
+
     def test_sort_by_title(self):
         self._test_sorting("title")
 

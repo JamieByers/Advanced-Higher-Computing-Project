@@ -12,7 +12,6 @@ from product import Product
 def get() -> list:
     # set up database
     db = Database() # create instance of Database object
-    db.initialise() # connect to the database
 
     # prompt user for search input of product to get from the database
     search_input = str(input("Input product search input: "))

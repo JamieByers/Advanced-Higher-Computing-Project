@@ -6,24 +6,15 @@ from product import Product
 # This is the database object to handle access to the sql database. This object reduces code duplication by using the Database object to get and add products to the database. It also simplifies the process in the scraping and main files as instead of writing the sql access with the database config rewritten, Database().insert_product(product) can be used instead
 class Database:
     def __init__(self):
-        self.cursor = None
-        self.connection = None
-
-    def initialise(self):
-        db_config = {
+        self.db_config = {
             "host": "localhost",
             "user": "jamie",
             "password": "password",
             "database": "products_database"
         }
 
-        # connect to database
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        self.connection = connection
-        self.cursor = cursor
-
-        return self.cursor
+        self.connection = mysql.connector.connect(**self.db_config)
+        self.cursor = self.connection.cursor()
 
     # check if the inputted product is already in the database
     def is_a_duplicate(self, product: Product) -> bool:
@@ -36,15 +27,16 @@ class Database:
         # execute the command
         self.cursor.execute(sql, (search_input,))
         # this is all of the product information in the database matching the search input
-        fetched_products: list = self.cursor.fetchall()
+        fetched_products= self.cursor.fetchall()
 
         # this is the column which url is stored in the database
         url_column_index = 14
 
         # loop through each product and compare the urls, this is becuase the urls should be unique
-        for fetched_product in fetched_products:
-            if fetched_product[url_column_index] == product.url:
-                return True
+        if fetched_products:
+            for fetched_product in fetched_products:
+                if fetched_product[url_column_index] == product.url:
+                    return True
 
         return False
 
@@ -104,22 +96,24 @@ class Database:
         try:
             self.cursor.execute(sql, (search_input,))
             # this is all of the product information of the matching search input in the database stored in an array
-            fetched_products: list = self.cursor.fetchall()
+            fetched_products = self.cursor.fetchall()
 
-            column_names: list[str | any] = [desc[0] for desc in self.cursor.description]
+            sql_description = self.cursor.description
+            column_names: list[str | any] = [desc[0] for desc in sql_description]
             # empty array to store the each Product object
             products = []
 
             # turn all of the products recieved into Product objects
-            for fetched_product in fetched_products:
-                # turn the information into a dictionary using the sql database column names and the product data
-                product_dict: dict = dict(zip(column_names, fetched_product))
-                # instantiate new instance of Product
-                product = Product()
-                # store the product dictionary information into the product object
-                product.productify(product_dict)
-                # add the Product object to the array of objects
-                products.append(product)
+            if fetched_products:
+                for fetched_product in fetched_products:
+                    # turn the information into a dictionary using the sql database column names and the product data
+                    product_dict: dict = dict(zip(column_names, fetched_product))
+                    # instantiate new instance of Product
+                    product = Product()
+                    # store the product dictionary information into the product object
+                    product.productify(product_dict)
+                    # add the Product object to the array of objects
+                    products.append(product)
 
             return products
 

@@ -1,3 +1,15 @@
+-------------------------MACOS INSTALL -----------------
+
+brew install mysql
+brew services start mysql
+brew services status mysql
+
+mysql -u root -p
+
+--------------------------------------------------------
+
+
+
 ---- INSTALL SQL ----
 sudo apt update && sudo apt install -y mysql-server
 
@@ -31,7 +43,7 @@ CREATE TABLE products (
     colour VARCHAR(100),
     size VARCHAR(100),
     quality VARCHAR(100),
-    `condition` VARCHAR(100), 
+    `condition` VARCHAR(100),
     location VARCHAR(255),
     payment_options TEXT,
     views INT DEFAULT 0,
@@ -44,7 +56,7 @@ CREATE TABLE products (
 
 USE products_database;
 SHOW TABLES;
-SELECT * FROM products; 
+SELECT * FROM products;
 
 
 
