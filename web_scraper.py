@@ -1,26 +1,41 @@
-from re import split
 import threading
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-import tempfile
-import time
-import json
-import os
-from db import Database
 
+# ---------------------------------- Selenium Imports  ---------------------------------
+# This creates a webdriver for chrome to run on, acting as a simulated browser
+from selenium import webdriver
+#This imports By, a module in selenium which allows the scraper to find elements of different types on the website. For example By.CLASS_NAME will look for elements with a matching class name.
+from selenium.webdriver.common.by import By
+# This modules makes the webdriver wait for a certain amount of time before ending. This means if the webdriver element cannot be found after the set time had elapsed, the scraper would then stop looking.
+from selenium.webdriver.support.ui import WebDriverWait
+# This module lets the webscraper make sure an element exists before scraping the page. This ensures the page is fully loaded before looking for information.
+from selenium.webdriver.support import expected_conditions as EC
+# This allows me to change the settings of the webdriver to suit my webscraper.
+from selenium.webdriver.chrome.options import Options
+
+# --------------------------------- Python Standard Library Imports ---------------------------------
+# This module is used for temporary storage
+import tempfile
+# This is used to wait inbetween doing actions. This is an alterantive to the expected_conditions module where instead of waiting before an element has loaded, it simply waits a certain amount of time.
+import time
+# The json module is used to convert the Product objects into JSON to be stored into a JSON file
+import json
+# The os module is used to check if the json file exists before trying to access it.
+import os
+
+# --------------------------------- My Personal Code ---------------------------------
+# This imports my Database object so the webscraper can add the products to the database as it finds them.
+from db import Database
+# This imports the Product object for the webscraper to store product data into.
 from product import Product
 
-
+# This is the WebScraper object. It is used to get product data from the vinted.com website by a certain search input. It works by creating a webdriver which acts as a simulated browser. This can then simulate clicks and return html. It will work primarily with the returned html. When running scrape() it will first go to the vinted page of a specfic product using fetch_urls(). On this page page after searching there will be a grid of products. The webscraper will get the url of all of these products storing them in an array. The webscraper will loop through all of these urls, going to each url indidually and collecting the product data of the webpage from that url using scrape_product(). After collecting this data it will be stored into Product object. This product objects is then added to the self.products array for the WebScraper to return using individual_scrape().
 class WebScraper:
     def __init__(self, search_input: str, limit=-1) -> None:
-        self.search_input: str = search_input
-        self.url: str = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}"
-        self.products = []
-        self.limit: int = limit
-        self.database = Database()
+        self.search_input: str = search_input # This is the search input of the product the user is looking for
+        self.url: str = f"https://www.vinted.co.uk/catalog?search_text={self.input_validate()}" # This is the url that the scraper will use to find the grid of products
+        self.products = [] # This will store all of the Product objects for the scraper to return
+        self.limit: int = limit # This will act as a rate limiter, limiting how many products could be found
+        self.database = Database() # This is a Database object. This is code I have written to manage access to the database, making it easier to add products
 
     def input_validate(self) -> str:
         # remove trailing spaces
@@ -35,9 +50,10 @@ class WebScraper:
 
         # Modify chrome options for the chrome driver
         chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode
+        chrome_options.add_argument("--headless")  # Run in headless mode, this means the simulated browser will not be shown on screen
         chrome_options.add_argument("--disable-gpu")  # Better performance
 
+        # Additional helpful arguments
         chrome_options.add_argument('--enable-logging')
         chrome_options.add_argument('--v=1')
         chrome_options.add_argument('--no-sandbox')
@@ -50,8 +66,6 @@ class WebScraper:
         return webdriver.Chrome(options=chrome_options)
 
     def fetch_urls(self) -> list[str]:
-        # print("Fetching urls")
-
         # Initialize the driver
         driver = self.initialise_driver()
         driver.get(self.url)
@@ -63,21 +77,23 @@ class WebScraper:
             EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
         )
 
+        # wait for the page to fulle load
         time.sleep(1)
 
         # click "Accept Cookies" button
         accept_button.click()
 
-        # print("Accepted cookies")
-
+        # wait for the cookies to disappear
         time.sleep(1)
+
+        # wait for all of the products to appear on the webpage
         product_cards = wait.until(
             EC.presence_of_all_elements_located(
                 (By.CSS_SELECTOR, "div[class='feed-grid__item']")
             )
         )
 
-
+        # array to store all of the urls of the products found
         urls = []
 
         if product_cards:
@@ -88,19 +104,18 @@ class WebScraper:
                     By.CSS_SELECTOR, ".u-position-relative.u-min-height-none.u-flex-auto.new-item-box__image-container"
                 )
                 link = new_item_box__image_container.find_element(By.TAG_NAME, "a")
-                url: str = link.get_attribute("href")
-                urls.append(url)
+                url= link.get_attribute("href")
+                if url:
+                    urls.append(url)
 
-                # print(url)
-
-        # print("Ended fetch urls")
         return urls
 
+    # this function is used to remove cookies from popping up when scraping information. This is because the cookies were preventing the scraping of the product information
     def accept_cookies(self, url: str, driver: webdriver.Chrome) -> bool:
-        # print("Accepting cookies")
         try:
+            # go to webpage of url
             driver.get(url)
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(driver, 10) # set the wait time for products to load to 10 seconds
 
             # wait until cookies appear
             accept_button = wait.until(
@@ -113,21 +128,20 @@ class WebScraper:
             # click "Accept Cookies" button
             accept_button.click()
 
+            # wait for cookies to disappear
             time.sleep(1)
-
-            # print("Accepted cookies")
 
             return True
 
+        # handle errors properly
         except Exception as e:
-            print("Accept Cookies Failed (line 105): ", e)
+            print("Accept Cookies Failed (line 138): ", e)
             return False
 
     def scrape_product(self, url: str, driver: webdriver.Chrome) -> Product:
         # go to product by url
         driver.get(url)
-        # wait for page content to load
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 10) # set the wait time for products to load to 10 seconds
 
         # wait until the product data has loaded
         wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[class='item-page-sidebar-content']")))
@@ -142,15 +156,17 @@ class WebScraper:
         # create new instance of product
         product = Product()
 
+        # --- assign all of the data found to the product information ---
+
         title: str = summary[0]
         product.title = title
 
-        size_quality: str = summary[1].split("·")
+        size_quality: list[str] = summary[1].split("·")
 
         size: str = size_quality[0]
         product.size = size
 
-        
+        # if there is no quality information give it a default value of ""
         if len(size_quality) > 1:
             quality: str = size_quality[1]
             product.quality = quality
@@ -166,10 +182,10 @@ class WebScraper:
 
         details_list = product_info.find_element(By.CSS_SELECTOR, "div[class='details-list details-list--details']")
         details = details_list.find_elements(By.CSS_SELECTOR, "div[class='details-list__item-value']")
-        details: list[str] = [detail.text for detail in details]
+        details: list = [detail.text for detail in details]
 
-        postage: str = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
-        postage: float = float(postage.split("£")[-1])
+        postage = product_info.find_element(By.CSS_SELECTOR, "div[data-testid='item-shipping-banner']").text
+        postage = float(postage.split("£")[-1])
         product.postage = postage
 
         # collect available details on the page and store them in a hashmap
@@ -201,6 +217,7 @@ class WebScraper:
         # create new chrome driver
         driver = self.initialise_driver()
 
+        # setup Database
         self.database.initialise()
 
         # this counter will be used as a limiter
@@ -213,17 +230,18 @@ class WebScraper:
             self.accept_cookies(url=urls[0], driver=driver)
 
             # loop through for index of url and actual url
-            for i, url in enumerate(urls):
+            for _, url in enumerate(urls):
                 # if the limit has been reached end scraping
                 if counter >= self.limit and self.limit > 0:
                     break
 
-                # print(f"Product {i}/{len(urls) if self.limit <= 0 else self.limit}")
+                # get the data of a single product using the url of that product
                 self.individual_scrape(url, driver, caching)
 
+                # increment the counter
                 counter += 1
 
-
+        # quit the driver and end the simulated browser, effectively closing the window
         driver.quit()
         return self.products
 
@@ -241,9 +259,9 @@ class WebScraper:
             # if there are products in the file read them and store them
             # in an array, if there are no products use an empty array
             try:
-                products: dict = json.load(file)
+                products: list = json.load(file) # get products from file
             except json.JSONDecodeError:
-                products = []
+                products = [] # use empty array if no products
 
             # add the product in a hashmap format
             pd: dict = product.__dict__
@@ -253,25 +271,27 @@ class WebScraper:
             if product_url not in product_urls:
                 products.append(pd)
 
+            # move cursor to the start of the file
             file.seek(0)
+
             # write the product data in a json format to the json file
             json_products: str = json.dumps(products, indent=4)
             file.write(json_products)
 
     def individual_scrape(self, url, driver, caching) -> Product:
-        # scrape the product information of the associated url 
+        # scrape the product information of the associated url
         product: Product = self.scrape_product(url=url, driver=driver)
 
-        # if information is found
+        # if product data is found
         if product:
-            # product.display()
+            # add Product object to the products array
             self.products.append(product)
             if caching:
                 # save the data to a json file to be used for testing
                 self.cache(product)
 
         # add the scraped product into the database
-        self.database.insert_product(product.__dict__)
+        self.database.insert_product(product)
 
         return product # return the product data in a product object
 
@@ -300,7 +320,7 @@ class WebScraper:
         urls = urls[:min(self.limit, len(urls))]
 
         self.database.initialise()
-        
+
         max_threads = 5
 
         split_urls = self.split_array(urls, max_threads)
@@ -322,7 +342,7 @@ class WebScraper:
             products.append(product)
 
         return products
-    
+
     def full_cache(self):
         import json
 
