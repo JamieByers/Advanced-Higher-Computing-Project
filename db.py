@@ -6,6 +6,7 @@ from product import Product
 # This is the database object to handle access to the sql database. This object reduces code duplication by using the Database object to get and add products to the database. It also simplifies the process in the scraping and main files as instead of writing the sql access with the database config rewritten, Database().insert_product(product) can be used instead
 class Database:
     def __init__(self):
+        # This is important information to access the database. This includes my login information and the database I am accessing
         self.db_config = {
             "host": "localhost",
             "user": "jamie",
@@ -13,7 +14,9 @@ class Database:
             "database": "products_database"
         }
 
+        # This creates a connection to the database
         self.connection = mysql.connector.connect(**self.db_config)
+        # This creates a cursor. This essentially mimics commands you would type. For example if you were to type the command SELECT * FROM products; into the terminal, you would be able to run this in the code using the cursor
         self.cursor = self.connection.cursor()
 
     # check if the inputted product is already in the database
@@ -35,6 +38,7 @@ class Database:
         # loop through each product and compare the urls, this is becuase the urls should be unique
         if fetched_products:
             for fetched_product in fetched_products:
+                # if one of the products in the database match the inputted product return true: meaning that there is a duplicate
                 if fetched_product[url_column_index] == product.url:
                     return True
 
@@ -49,7 +53,7 @@ class Database:
 
         self.connection.commit()
 
-
+    # This function inserts a Product object and its information into the sql database
     def insert_product(self, product: Product) -> None:
         # check if the product is already in the database
         if self.is_a_duplicate(product):
@@ -89,6 +93,7 @@ class Database:
         except mysql.connector.Error as err:
             print("Error:", err)
 
+    # This function finds and returns the product information in the database that matches the search input, returning the information in a Product object foramt.
     def get_products_by_search_input(self, search_input: str) -> list[Product]:
         # sql query to get all of the products which match the inputted search input
         sql: str = "SELECT * FROM products WHERE search_input=%s"

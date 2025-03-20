@@ -1,5 +1,6 @@
 # Advanced Higher Concept - Object Oriented Programming - Product Object
 class Product:
+    # This is the constructor function. This assigns the parameters of the constructor function to the instance variables.
     def __init__(
         self, title: str = "", price: float = 0.0, buyer_protection_price: float = 0.0, postage: float = 0.0, brand: str = "", colour: str = "", size: str = "", quality: str = "", condition: str = "", location: str = "", payment_options: str = "", views: int = 0, description: str = "", url: str = "", uploaded: str = "", search_input: str = "",
     ):
@@ -20,6 +21,7 @@ class Product:
         self.uploaded = uploaded
         self.search_input = search_input
 
+    # This function will display all of the information the Product object stores
     def display(self):
         print("Product Details:")
         print(f"Title: {self.title}")
@@ -41,12 +43,14 @@ class Product:
         print()
         print()
 
+    # This function will display a small amount of the information the Product object stores
     def minimal_display(self):
         print(f"Title: {self.title}")
         print(f"Price: £{self.price:.2f}")
         print(f"URL: {self.url}")
-        
-    def productify(self, dict): 
+
+    # This turns a hashmap (dictionary/dict) into a Product object
+    def productify(self, dict):
         self.title = dict.get("title", self.title)
         self.price = float(dict.get("price", self.price))
         self.buyer_protection_price = float(dict.get("buyer_protection_price", self.buyer_protection_price))

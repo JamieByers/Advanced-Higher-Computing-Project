@@ -8,9 +8,8 @@ from sort import ascending_sort, descending_sort
 # Import the product object to allow type definition
 from product import Product
 
-# gets existing products from the database
+# handles getting products from the database, prompting the user for the product search input to get
 def get() -> list:
-    # set up database
     db = Database() # create instance of Database object
 
     # prompt user for search input of product to get from the database
@@ -27,7 +26,7 @@ def get() -> list:
 
     return products # return the products from the database
 
-# scrapes new product data
+# handles scraping new products, prompting the user to input the search input of a product to look for, scraping it, then returning the product data found
 def scrape() -> list:
     # prompt the user for a product to search for
     search_input: str = str(input("Input your search input for your product: "))
@@ -66,6 +65,7 @@ def check_valid_key(key: str) -> bool:
     else:
         return False
 
+# this handles the sorting functionality of the program, prompting the user with the decision between sorting in ascending or descending order, it then calls the respective function (ascending_sort() or descending_sort()), using the functions from the sort file. This takes the code that is in the sort file and uses it here. This seperates the actual sorting process making the program much more readable.
 def handle_sort(products: list):
     # get the key the sorting function will sort by from the user
     key = str(input("What would you like to sort by (price by default): "))
@@ -113,6 +113,7 @@ def handle_sort(products: list):
     else:
         print("No products to be sorted")
 
+# this handles the searching functionality of the program, prompting the user to choose a key to search by and then a value to search for. For example: key : price, value: 5.0. It then runs the search() function imported from the search file. This seperates the actual search process from the search logic making the code easier to read.
 def handle_search(products: list):
     # get the key the searching function will search by from the user
     key = str(input("What value would you like to search by (price by default): "))

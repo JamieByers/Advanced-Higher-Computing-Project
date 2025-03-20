@@ -46,8 +46,6 @@ class WebScraper:
 
     def initialise_driver(self) -> webdriver.Chrome:
 
-        # These settings are specfic for the scraper to run on a github codespace.
-
         # Modify chrome options for the chrome driver
         chrome_options = Options()
         chrome_options.add_argument("--headless")  # Run in headless mode, this means the simulated browser will not be shown on screen
@@ -77,7 +75,7 @@ class WebScraper:
             EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
         )
 
-        # wait for the page to fulle load
+        # wait for the page to fully load
         time.sleep(1)
 
         # click "Accept Cookies" button
@@ -96,16 +94,22 @@ class WebScraper:
         # array to store all of the urls of the products found
         urls = []
 
+        # if products are found on the page
         if product_cards:
+            # loop through each product found on the first page
             for card in product_cards:
+                # find the picture of the product
                 feed_grid_item_content = card.find_element(By.CLASS_NAME, "feed-grid__item-content")
                 new_item_box__container = feed_grid_item_content.find_element(By.CLASS_NAME, "new-item-box__container")
                 new_item_box__image_container = new_item_box__container.find_element(
                     By.CSS_SELECTOR, ".u-position-relative.u-min-height-none.u-flex-auto.new-item-box__image-container"
                 )
                 link = new_item_box__image_container.find_element(By.TAG_NAME, "a")
+                # get the product url from the image of the product
                 url= link.get_attribute("href")
+                # if a url is found
                 if url:
+                    # add the url to the array of urls
                     urls.append(url)
 
         return urls
@@ -210,6 +214,7 @@ class WebScraper:
 
         return product
 
+    # this is the main function to scrape the website. This brings the scraper together by combining all of the functions to find the product urls, accept cookies, and collect the product information. Once all of the product information is found, it is returned as an array of objects.
     def scrape(self, caching=True) -> list[Product]:
         # get all product urls
         urls: list[str] = self.fetch_urls()
@@ -242,6 +247,7 @@ class WebScraper:
         driver.quit()
         return self.products
 
+    # This function saves the product data to a JSON file to be used later
     def cache(self, product) -> None:
         # create file name for the data
         file_name: str = f"product-data/{self.search_input}-data.json"
@@ -275,6 +281,7 @@ class WebScraper:
             json_products: str = json.dumps(products, indent=4)
             file.write(json_products)
 
+    # This function is the function that brings the scraping together for scraping an individual product. This handles the caching of the product, the addition to the total products and the inserting the product to the database.
     def individual_scrape(self, url, driver, caching) -> Product:
         # scrape the product information of the associated url
         product: Product = self.scrape_product(url=url, driver=driver)
@@ -293,6 +300,8 @@ class WebScraper:
         return product # return the product data in a product object
 
     # --------------------------------- OPTIONAL -------------------------------------------
+
+    # This code will likely not be involved in the final project.
 
     def decided_scrape(self, threading=False, caching=True):
         if threading:
