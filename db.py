@@ -19,7 +19,7 @@ class Database:
         # This creates a cursor. This essentially mimics commands you would type. For example if you were to type the command SELECT * FROM products; into the terminal, you would be able to run this in the code using the cursor
         self.cursor = self.connection.cursor()
 
-    # check if the inputted product is already in the database
+    # This checks if product information is already in the SQL database. The function does this by getting all of the product information of products matching the search_input of the inputted product. It then loops through all of the product information from the database and compares the url, a unique identifier of each database row, to the url of the inputted product. If they match the function will return true, as in the product is a dupliacate, and if false it will return false,as in the product is not a duplicate.
     def is_a_duplicate(self, product: Product) -> bool:
         # This is the search input of the product the user is looking for
         search_input: str = product.search_input
@@ -53,7 +53,7 @@ class Database:
 
         self.connection.commit()
 
-    # This function inserts a Product object and its information into the sql database
+    # This function inserts a Product object and its information into the sql database. It does this by putting the information of the product object into an SQL command. This command is then run using the cursor and executed to add the product information to the database.
     def insert_product(self, product: Product) -> None:
         # check if the product is already in the database
         if self.is_a_duplicate(product):
@@ -93,7 +93,7 @@ class Database:
         except mysql.connector.Error as err:
             print("Error:", err)
 
-    # This function finds and returns the product information in the database that matches the search input, returning the information in a Product object foramt.
+    # This function finds and returns the product information in the database that matches the search input, returning the information in a Product object foramt. The function does by inserting the search input into a SQL command. This SQL command is then executed and the product inforamation in the databsase with the search input is returned. This information is then turned into product objects and these objects are returned.
     def get_products_by_search_input(self, search_input: str) -> list[Product]:
         # sql query to get all of the products which match the inputted search input
         sql: str = "SELECT * FROM products WHERE search_input=%s"

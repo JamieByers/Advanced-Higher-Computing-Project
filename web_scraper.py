@@ -1,3 +1,4 @@
+# ---------------------------------- Optional Imports  ---------------------------------
 import threading
 
 # ---------------------------------- Selenium Imports  ---------------------------------
@@ -63,6 +64,7 @@ class WebScraper:
 
         return webdriver.Chrome(options=chrome_options)
 
+    # This function gathers the urls of all of the products on the first page of the results found. It first goes to the page, then it gathers the urls of products by finding the image of each individual product and saving it to an array. This is because to go to the page of the product a traditional user would click on the image of the product to be taken to the page. This means the url can be found where the image is found.
     def fetch_urls(self) -> list[str]:
         # Initialize the driver
         driver = self.initialise_driver()
@@ -114,7 +116,7 @@ class WebScraper:
 
         return urls
 
-    # this function is used to remove cookies from popping up when scraping information. This is because the cookies were preventing the scraping of the product information
+    # This function is used to remove cookies from popping up when scraping information. This is because the cookies were preventing the scraping of the product information. It does this by going to a "dummy" page where the scraper collects no information. Then once the page prompts to "Accept Cookies" this function clicks the accept button. Since the same driver is used throughout the scraping process, the cookies will continue to be accepted and the website won't ask to accept cookies again.
     def accept_cookies(self, url: str, driver: webdriver.Chrome) -> bool:
         try:
             # go to webpage of url
@@ -142,6 +144,7 @@ class WebScraper:
             print("Accept Cookies Failed (line 138): ", e)
             return False
 
+    # This function collects the information of a product, stores it in a Product object and then returns that product. It does this by navigating to the page using the url parameter. It then finds the relevant infromation on the page, collects it and then stores it in a product object.
     def scrape_product(self, url: str, driver: webdriver.Chrome) -> Product:
         # go to product by url
         driver.get(url)
